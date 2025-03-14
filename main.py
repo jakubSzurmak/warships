@@ -9,19 +9,12 @@ if __name__ == '__main__':
     game_over = False
 
     myGame = gameHolder.GameHolder()
-    myGame.getWindow().resize(1280, 720)
+    myGame.getWindow().resize(1280, 920)
     myGame.getWindow().show()
 
 
     while running:
-        if not ships_ready:
-            myGame.startState()
-            ships_ready =True
-        elif ships_ready:
-            pass
-        elif game_over:
-            pass
-
+        myGame.startState()
         sys.exit(myGame.getApp().exec())
 
 

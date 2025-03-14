@@ -10,33 +10,25 @@ class GameHolder:
         self.layout = QtWidgets.QGridLayout()
 
         self.leftSide = QtWidgets.QVBoxLayout()
+
         self.rightSide = QtWidgets.QVBoxLayout()
         self.buttonPanel = QtWidgets.QHBoxLayout()
+        self.acceptButton = QtWidgets.QPushButton("Appprove")
+        self.backButton = QtWidgets.QPushButton("Back")
+        self.resetButton = QtWidgets.QPushButton("Reset")
+        self.quitButton = QtWidgets.QPushButton("Exit")
 
         self.boardLayout = QtWidgets.QGridLayout()
 
         self.tab1 = QtWidgets.QWidget()
         self.tab2 = QtWidgets.QWidget()
 
-        self.myOnlineStatus = QtWidgets.QTextEdit()
-        self.myOnlineStatus.setReadOnly(True)
-        self.myOnlineStatus.setLineWrapMode(QtWidgets.QTextEdit.NoWrap)
+        self.myOnlineStatus = QtWidgets.QLabel("You are online")
 
-        self.enemyOnlineStatus = QtWidgets.QTextEdit()
-        self.enemyOnlineStatus.setReadOnly(True)
-        self.enemyOnlineStatus.setLineWrapMode(QtWidgets.QTextEdit.NoWrap)
+        self.enemyOnlineStatus = QtWidgets.QLabel("Enemy is Online")
 
         self.selectionBoard = {
-            0: [],
-            1: [],
-            2: [],
-            3: [],
-            4: [],
-            5: [],
-            6: [],
-            7: [],
-            8: [],
-            9: [],
+            0: [], 1: [], 2: [], 3: [], 4: [], 5: [], 6: [], 7: [], 8: [], 9: [], 10: []
         }
 
     def getWindow(self):
@@ -49,29 +41,122 @@ class GameHolder:
         return self.app
 
     def initRightSide(self):
+        self.layout.addLayout(self.rightSide, 0, 2)
         self.rightSide.addWidget(self.myOnlineStatus)
+        self.rightSide.addWidget(self.enemyOnlineStatus)
+
+    def initLeftSide(self):
+        self.layout.addLayout(self.leftSide, 0, 0)
+        self.initSelectionBoard()
 
     def initButtonPanel(self):
-        pass
+        self.layout.addLayout(self.buttonPanel, 1, 0, 1, 3)
+        self.acceptButton.setStyleSheet("""
+                                            QPushButton { 
+                                                background-color:lightgrey;
+                                                border: 2px solid black;
+                                                font-size: 16px;
+                                                padding: 0px;
+                                            }
+                                            QPushButton:hover {
+                                                background-color: green;
+                                                color: white;
+                                            }
+                                        """)
+        self.buttonPanel.addWidget(self.acceptButton)
+
+        self.backButton.setStyleSheet("""
+                                            QPushButton { 
+                                                background-color:lightgrey;
+                                                border: 2px solid black;
+                                                font-size: 16px;
+                                                padding: 0px;
+                                            }
+                                            QPushButton:hover {
+                                                background-color: yellow;
+                                                color: black;
+                                            }
+                                        """)
+        self.buttonPanel.addWidget(self.backButton)
+
+        self.resetButton.setStyleSheet("""
+                                            QPushButton { 
+                                                background-color:lightgrey;
+                                                border: 2px solid black;
+                                                font-size: 16px;
+                                                padding: 0px;
+                                            }
+                                            QPushButton:hover {
+                                                background-color: red;
+                                                color: white;
+                                            }
+                                        """)
+        self.buttonPanel.addWidget(self.resetButton)
+
+        self.quitButton.setStyleSheet("""
+                                                    QPushButton { 
+                                                        background-color:lightgrey;
+                                                        border: 2px solid black;
+                                                        font-size: 16px;
+                                                        padding: 0px;
+                                                    }
+                                                    QPushButton:hover {
+                                                        background-color: black;
+                                                        color: white;
+                                                    }
+                                                """)
+        self.buttonPanel.addWidget(self.quitButton)
 
     def initSelectionBoard(self):
-        for i in range(10):
-            for j in range(10):
-                self.selectionBoard[i].append(QtWidgets.QPushButton(f"{i}, {j}").setFixedSize(40, 30))
-                self.boardLayout.addWidget(QtWidgets.QPushButton(), i, j)
+        az = ['', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J']
+        nums = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '']
+        self.leftSide.addLayout(self.boardLayout)
+        self.boardLayout.setSpacing(0)
+        for i in range(11):
+            self.selectionBoard[i].append(QtWidgets.QPushButton(az[i]))
+            self.selectionBoard[i][0].setEnabled(False)
+            self.selectionBoard[i][0].setStyleSheet("""
+                                                       QPushButton {
+                                                           background-color: salmon;
+                                                           color: black;
+                                                           border: 3px solid black;
+                                                           font-size: 20px;
+                                                           padding: 0px;
+                                                       }
+                                                   """)
+            for j in range(11):
+                if i == 0:
+                    self.selectionBoard[i].append(QtWidgets.QPushButton(nums[j]))
+                    self.selectionBoard[i][j].setStyleSheet("""
+                                                                QPushButton {
+                                                                    background-color: salmon;
+                                                                    color: black;
+                                                                    border: 3px solid black;
+                                                                    font-size: 20px;
+                                                                    padding: 0px;
+                                                                }
+                                                            """)
+                    self.selectionBoard[i][j].setEnabled(False)
 
-    def printSelectionBoard(self):
-        pass
+                else:
+                    self.selectionBoard[i].append(QtWidgets.QPushButton())
+                    if j != 0:
+                        self.selectionBoard[i][j].setStyleSheet("""
+                                                                    QPushButton {
+                                                                        background-color: lightblue;
+                                                                        border: 2px solid black;
+                                                                        font-size: 16px;
+                                                                        padding: 0px;
+                                                                    }
+                                                                    QPushButton:hover {
+                                                                        background-color: orange;
+                                                                    }
+                                                                """)
+
+                self.selectionBoard[i][j].setFixedSize(60, 55)
+                self.boardLayout.addWidget(self.selectionBoard[i][j], i, j)
 
     def startState(self):
-        self.boardLayout.setSpacing(0)
-
-        self.layout.addLayout(self.leftSide, 0, 0)
-        self.layout.addLayout(self.rightSide, 0, 1)
-        self.layout.addLayout(self.buttonPanel, 1, 0)
-
-        self.leftSide.addLayout(self.boardLayout, 0)
-
         self.tabs.setLayout(self.layout)
         self.window.setCentralWidget(self.tabs)
 
@@ -80,8 +165,9 @@ class GameHolder:
 
         self.tabs.setTabEnabled(1, False)
 
-        self.initSelectionBoard()
+        self.initLeftSide()
         self.initRightSide()
+        self.initButtonPanel()
 
         ships_ready = False
         while not ships_ready:
