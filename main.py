@@ -1,7 +1,5 @@
-import sys
-
 import gameHolder
-
+import sys
 
 if __name__ == '__main__':
     running = True
@@ -12,9 +10,7 @@ if __name__ == '__main__':
     myGame.getWindow().resize(1280, 920)
     myGame.getWindow().show()
 
-
     while running:
         myGame.startState()
         sys.exit(myGame.getApp().exec())
-
 
