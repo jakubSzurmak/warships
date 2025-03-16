@@ -19,7 +19,11 @@ class ShipManager:
 
     def __init__(self):
         self.ships = {'A': [], 'B': [], 'C': [], 'D': [], 'E': [], 'F': [], 'G': [], 'H': [], 'I': [], 'J': []}
-        self.currentShipOption = 0
+        self.currentShipOption = None
+        self.remainingShipSelections = None
+        self.currentShipSelectionFields = []
+        self.shipAwaitingApproval = 0
+
 
         self.remainingShipOneSelections = 4
         self.remainingShipTwoSelections = 3
@@ -42,9 +46,28 @@ class ShipManager:
         self.guiShipSelector.idClicked.connect(self.shipOptionSelected)
 
 
+    def getRemainingShipSelections(self):
+        return self.remainingShipSelections
+
+    def getCurrentShipOption(self):
+        return self.currentShipOption
+
+    def setShipAwaitingApproval(self, val):
+        self.shipAwaitingApproval = val
+
     def shipSelectionConfirmed(self):
-        print("asdasdasd")
-        pass
+        if self.shipAwaitingApproval != 0:
+            #add ship to fields in s.ships
+            #del current field selections
+            #shipAprroval = 0
+            self.shipAwaitingApproval = 0
+            #remaining -=1
+
+            #reset current option
+            self.currentShipOption = None
+            # update board
+            pass
+
 
     def shipSelectionRollback(self):
         pass
@@ -53,27 +76,41 @@ class ShipManager:
         pass
 
 
-    def collectFields(self, remainingSelections, x, y):
-        pass
-
     # x == a,b,c,...,j
     # y == 1..10
     def shipFieldSelected(self, x, y):
-        if self.currentShipOption == 1:
-            self.collectFields(0, x, y)
-        elif self.currentShipOption == 2:
-            self.collectFields(1, x, y)
-        elif self.currentShipOption == 3:
-            self.collectFields(2, x, y)
-        elif self.currentShipOption == 4:
-            self.collectFields(3, x, y)
+        if self.currentShipOption is not None:
+
+            if (x, y) not in self.currentShipSelectionFields:
+                self.currentShipSelectionFields.append((x, y))
+
+            if self.currentShipOption == 1:
+                self.remainingShipSelections -= 1
+
+            elif self.currentShipOption == 2:
+                self.remainingShipSelections -= 1
+
+
+            elif self.currentShipOption == 3:
+                self.remainingShipSelections -= 1
+
+            elif self.currentShipOption == 4:
+                self.remainingShipSelections -= 1
+
+            else:
+                exit(69)
         else:
-            exit(69)
+            pass
+
+
 
     def getShipOptionButtons(self):
         return [self.shipFourOption, self.shipThreeOption, self.shipTwoOption, self.shipOneOption]
 
     def shipOptionSelected(self, uuid):
+        self.shipFourOption = uuid
         self.currentShipOption = uuid
+        self.remainingShipSelections = uuid
+
         #self.disableButtons()
 

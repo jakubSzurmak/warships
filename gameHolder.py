@@ -23,6 +23,8 @@ class GameHolder:
         self.quitButton = QtWidgets.QPushButton("Exit")
 
         self.boardLayout = QtWidgets.QGridLayout()
+        self.shipFields = []
+        self.shipOptions = []
 
         self.tab1 = QtWidgets.QWidget()
         self.tab2 = QtWidgets.QWidget()
@@ -33,6 +35,13 @@ class GameHolder:
         self.selectionBoard = {
             0: [], 1: [], 2: [], 3: [], 4: [], 5: [], 6: [], 7: [], 8: [], 9: [], 10: []
         }
+
+        self.letterToIndex = {
+            'A': 1, 'B': 2, 'C': 3, 'D': 4, 'E': 5, 'F': 6, 'G': 7, 'H': 8, 'I': 9, 'J': 10
+        }
+
+        self.indexToLetter = {v: k for k, v in self.letterToIndex.items()}
+
 
     def getWindow(self):
         return self.window
@@ -61,7 +70,6 @@ class GameHolder:
             self.quitButton.clicked.connect(quit)
         else:
             pass
-
 
     def initButtonPanel(self):
         self.layout.addLayout(self.buttonPanel, 1, 0, 1, 3)
@@ -123,6 +131,51 @@ class GameHolder:
         self.buttonPanel.addWidget(self.quitButton)
         self.connectButtons()
 
+    def locateSurroundingFields(self, baseX, baseY):
+        checks = [-1, 1]
+        valid = []
+
+        for i in checks:
+            if 1 <= self.letterToIndex[baseX] + i <= 10:
+                valid.append((self.indexToLetter[self.letterToIndex[baseX] + i], baseY))
+            if 1 <= baseY + i <= 10:
+                valid.append((baseX, baseY + i))
+        return valid
+
+    def customizeButtonForShip(self):
+        pass
+
+    def customizeButtonForNextMove(self):
+        pass
+
+    def updateNextMoveOptions(self, baseX, baseY):
+        if self.shipMg.getCurrentShipOption() != 1:
+            if self.shipMg.getRemainingShipSelections() == 0:
+                self.shipMg.setShipAwaitingApproval(self.shipMg.getCurrentShipOption())
+
+            if self.shipMg.getRemainingShipSelections() == self.shipMg.getCurrentShipOption() - 1:
+                fieldsToUpdate = self.locateSurroundingFields(baseX, baseY)
+                for pair in fieldsToUpdate:
+
+                    pass
+            else:
+                pass
+
+
+    def markShipFields(self, x, y):
+        if self.shipMg.getCurrentShipOption() is not None:
+            self.disableForbiddenFields()
+            self.shipFields.append((x, y))
+            self.selectionBoard[self.letterToIndex[x]][y].setEnabled(True)
+            self.updateNextMoveOptions(x, y)
+
+
+    def disableForbiddenFields(self):
+        for i in range(11):
+            for j in range(11):
+                if self.selectionBoard[i][j].isEnabled():
+                    self.selectionBoard[i][j].setEnabled(False)
+
     def initSelectionBoard(self):
         az = ['', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J']
         nums = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '']
@@ -167,9 +220,15 @@ class GameHolder:
                                                                     QPushButton:hover {
                                                                         background-color: orange;
                                                                     }
+                                                                     QPushButton:disabled {
+                                                                        background-color: gray;
+                                                                        border: 2px solid darkgray;
+                                                                    }
                                                                 """)
                         self.selectionBoard[i][j].clicked.connect(lambda checked, r=az[i], c=j:
-                                                                  self.shipMg.shipFieldSelected(r, c))
+                                                                  (self.shipMg.shipFieldSelected(r, c),
+                                                                   self.markShipFields(r, c))
+                                                                  )
 
                 self.selectionBoard[i][j].setFixedSize(60, 55)
                 self.boardLayout.addWidget(self.selectionBoard[i][j], i, j)
