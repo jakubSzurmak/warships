@@ -18,12 +18,10 @@ class Ship:
 class ShipManager:
 
     def __init__(self):
-        self.ships = {'A': [], 'B': [], 'C': [], 'D': [], 'E': [], 'F': [], 'G': [], 'H': [], 'I': [], 'J': []}
         self.currentShipOption = None
         self.remainingShipSelections = None
         self.currentShipSelectionFields = []
         self.shipAwaitingApproval = 0
-
 
         self.remainingShipOneSelections = 4
         self.remainingShipTwoSelections = 3
@@ -55,17 +53,62 @@ class ShipManager:
     def setShipAwaitingApproval(self, val):
         self.shipAwaitingApproval = val
 
+    def getShipAwaitingApproval(self):
+        return self.shipAwaitingApproval
+
+
+    def updateShipOptionLabel(self, opt):
+        if opt == 1:
+            self.remainingShipOneSelections -= 1
+            self.shipOneOption.setText(f'Single-masted ship, {self.remainingShipOneSelections} remaining')
+            if self.remainingShipOneSelections == 0:
+                self.shipOneOption.setDisabled(True)
+        elif opt == 2:
+            self.remainingShipTwoSelections -= 1
+            self.shipTwoOption.setText(f'Two-masted ship, {self.remainingShipTwoSelections} remaining')
+            if self.remainingShipTwoSelections == 0:
+                self.shipTwoOption.setDisabled(True)
+        elif opt == 3:
+            self.remainingShipThreeSelections -= 1
+            self.shipThreeOption.setText(f'Three-masted ship, '
+                                                      f'{self.remainingShipThreeSelections} remaining')
+            if self.remainingShipThreeSelections == 0:
+                self.shipThreeOption.setDisabled(True)
+        elif opt == 4:
+            self.remainingShipFourSelections -= 1
+            self.shipFourOption.setText(f'Four-masted ship, '
+                                                     f'{self.remainingShipFourSelections} remaining')
+            self.shipFourOption.setDisabled(True)
+        else:
+            exit(69)
+
+
+
+    def switchShipOptions(self, bit):
+        self.shipOneOption.setDisabled(bit)
+        self.shipTwoOption.setDisabled(bit)
+        self.shipThreeOption.setDisabled(bit)
+        self.shipFourOption.setDisabled(bit)
+
+    def uncheckShipOptions(self):
+        self.guiShipSelector.setExclusive(False)
+        for button in self.guiShipSelector.buttons():
+            button.setChecked(False)
+        self.guiShipSelector.setExclusive(True)
+
+
     def shipSelectionConfirmed(self):
         if self.shipAwaitingApproval != 0:
-            #add ship to fields in s.ships
+            self.remainingShipSelections -= 1
             #del current field selections
-            #shipAprroval = 0
             self.shipAwaitingApproval = 0
-            #remaining -=1
+
+            if self.remainingShipSelections == 0:
+                self.updateShipOptionLabel(self.currentShipOption)
 
             #reset current option
             self.currentShipOption = None
-            # update board
+            self.uncheckShipOptions()
             pass
 
 
@@ -80,25 +123,8 @@ class ShipManager:
     # y == 1..10
     def shipFieldSelected(self, x, y):
         if self.currentShipOption is not None:
-
-            if (x, y) not in self.currentShipSelectionFields:
-                self.currentShipSelectionFields.append((x, y))
-
-            if self.currentShipOption == 1:
-                self.remainingShipSelections -= 1
-
-            elif self.currentShipOption == 2:
-                self.remainingShipSelections -= 1
-
-
-            elif self.currentShipOption == 3:
-                self.remainingShipSelections -= 1
-
-            elif self.currentShipOption == 4:
-                self.remainingShipSelections -= 1
-
-            else:
-                exit(69)
+            if self.remainingShipSelections == 0:
+                self.shipAwaitingApproval = self.currentShipOption
         else:
             pass
 
@@ -108,7 +134,6 @@ class ShipManager:
         return [self.shipFourOption, self.shipThreeOption, self.shipTwoOption, self.shipOneOption]
 
     def shipOptionSelected(self, uuid):
-        self.shipFourOption = uuid
         self.currentShipOption = uuid
         self.remainingShipSelections = uuid
 

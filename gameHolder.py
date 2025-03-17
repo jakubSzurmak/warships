@@ -25,6 +25,7 @@ class GameHolder:
         self.boardLayout = QtWidgets.QGridLayout()
         self.shipFields = []
         self.shipOptions = []
+        self.forbiddenFields = []
 
         self.tab1 = QtWidgets.QWidget()
         self.tab2 = QtWidgets.QWidget()
@@ -64,7 +65,7 @@ class GameHolder:
 
     def connectButtons(self):
         if self.tabs.isTabEnabled(0):
-            self.acceptButton.clicked.connect(self.shipMg.shipSelectionConfirmed)
+            self.acceptButton.clicked.connect(self.pullApproval)
             self.backButton.clicked.connect(self.shipMg.shipSelectionRollback)
             self.resetButton.clicked.connect(self.shipMg.shipsSelectionRestart)
             self.quitButton.clicked.connect(quit)
@@ -131,46 +132,85 @@ class GameHolder:
         self.buttonPanel.addWidget(self.quitButton)
         self.connectButtons()
 
-    def locateSurroundingFields(self, baseX, baseY):
+    def locateSurroundingFields(self, baseX, baseY, level=None):
         checks = [-1, 1]
         valid = []
 
         for i in checks:
             if 1 <= self.letterToIndex[baseX] + i <= 10:
                 valid.append((self.indexToLetter[self.letterToIndex[baseX] + i], baseY))
+
             if 1 <= baseY + i <= 10:
                 valid.append((baseX, baseY + i))
+
+
+        # (left, down, right, up)
         return valid
 
-    def customizeButtonForShip(self):
-        pass
+    def customizeButtonForShip(self, x, y):
+        self.selectionBoard[x][y].setStyleSheet("""
+                                                    QPushButton {
+                                                        background-color: lightblue;
+                                                        border: 2px solid black;
+                                                        font-size: 16px;
+                                                        padding: 0px;
+                                                    }
+                                                    QPushButton:hover {
+                                                        background-color: orange;
+                                                    }
+                                                     QPushButton:disabled {
+                                                        background-color: purple;
+                                                        border: 3px solid black;
+                                                    }
+                                                """)
 
     def customizeButtonForNextMove(self):
         pass
 
+    def styleShipField(self):
+        pass
+
+    def enableBoardFields(self):
+        self.styleShipField()
+        for i in range(11):
+            for j in range(11):
+                if i != 0 and j != 0 and (self.indexToLetter[i], j) not in self.forbiddenFields:
+                    self.selectionBoard[i][j].setEnabled(True)
+
+    def pullApproval(self):
+        if self.shipMg.getShipAwaitingApproval() == self.shipMg.getCurrentShipOption():
+            print(self.forbiddenFields, self.shipFields)
+            self.shipMg.shipSelectionConfirmed()
+            self.enableBoardFields()
+            self.shipMg.switchShipOptions(False)
+
+            #forbidd surrouindingsa
+        # style the ship field
+        # unlock board without ship and fields arround it
+        # resume
+
+
+
     def updateNextMoveOptions(self, baseX, baseY):
         if self.shipMg.getCurrentShipOption() != 1:
-            if self.shipMg.getRemainingShipSelections() == 0:
-                self.shipMg.setShipAwaitingApproval(self.shipMg.getCurrentShipOption())
+            pass
+        else:
+            self.shipMg.setShipAwaitingApproval(self.shipMg.getCurrentShipOption())
+            self.forbiddenFields.append((baseX, baseY))
 
-            if self.shipMg.getRemainingShipSelections() == self.shipMg.getCurrentShipOption() - 1:
-                fieldsToUpdate = self.locateSurroundingFields(baseX, baseY)
-                for pair in fieldsToUpdate:
-
-                    pass
-            else:
-                pass
 
 
     def markShipFields(self, x, y):
         if self.shipMg.getCurrentShipOption() is not None:
-            self.disableForbiddenFields()
+            self.disableBoardFields()
+            self.shipMg.switchShipOptions(True)
             self.shipFields.append((x, y))
-            self.selectionBoard[self.letterToIndex[x]][y].setEnabled(True)
+            self.customizeButtonForShip(self.letterToIndex[x], y)
             self.updateNextMoveOptions(x, y)
 
 
-    def disableForbiddenFields(self):
+
+    def disableBoardFields(self):
         for i in range(11):
             for j in range(11):
                 if self.selectionBoard[i][j].isEnabled():
