@@ -2,6 +2,22 @@ import shipManager
 from shipManager import QtWidgets
 
 
+def locateSurroundingFields(baseX, baseY, level=None):
+    print("gh.locateSurr")
+    directions = [
+        (-1, -1), (-1, 0), (-1, 1),  # Top-left, Top, Top-right
+        (0, -1), (0, 1),  # Left,        Right
+        (1, -1), (1, 0), (1, 1)  # Bottom-left, Bottom, Bottom-right
+    ]
+
+    surrounding_fields = [
+        (baseX + dx, baseY + dy) for dx, dy in directions
+        if 1 <= baseX + dx < 11 and 1 <= baseY + dy < 11
+    ]
+
+    return surrounding_fields
+
+
 class GameHolder:
 
     def __init__(self):
@@ -17,13 +33,12 @@ class GameHolder:
         self.rightSide = QtWidgets.QVBoxLayout()
         self.buttonPanel = QtWidgets.QHBoxLayout()
 
-        self.acceptButton = QtWidgets.QPushButton("Appprove")
+        self.acceptButton = QtWidgets.QPushButton("Approve")
         self.backButton = QtWidgets.QPushButton("Back")
         self.resetButton = QtWidgets.QPushButton("Reset")
         self.quitButton = QtWidgets.QPushButton("Exit")
 
         self.boardLayout = QtWidgets.QGridLayout()
-        self.shipFields = []
         self.shipOptions = []
         self.forbiddenFields = []
 
@@ -43,27 +58,35 @@ class GameHolder:
 
         self.indexToLetter = {v: k for k, v in self.letterToIndex.items()}
 
-
     def getWindow(self):
+        print("gh.getWindow")
         return self.window
 
     def getTabs(self):
+        print("gh.getTabs")
         return self.tabs
 
     def getApp(self):
+        print("gh.getApp")
         return self.app
 
+    # save the sequence of ship options approvals, for ship back >
+    # pop each code and for code in ship fields remove and restyle
+
     def initRightSide(self):
+        print("gh.initRight")
         self.layout.addLayout(self.rightSide, 0, 2)
         self.rightSide.addWidget(self.myOnlineStatus)
         self.rightSide.addWidget(self.enemyOnlineStatus)
         [self.rightSide.addWidget(x) for x in self.shipMg.getShipOptionButtons()]
 
     def initLeftSide(self):
+        print("gh.initLeft")
         self.layout.addLayout(self.leftSide, 0, 0)
         self.initSelectionBoard()
 
     def connectButtons(self):
+        print("gh.initConnect")
         if self.tabs.isTabEnabled(0):
             self.acceptButton.clicked.connect(self.pullApproval)
             self.backButton.clicked.connect(self.shipMg.shipSelectionRollback)
@@ -73,6 +96,7 @@ class GameHolder:
             pass
 
     def initButtonPanel(self):
+        print("gh.initButtonPanel")
         self.layout.addLayout(self.buttonPanel, 1, 0, 1, 3)
         self.acceptButton.setStyleSheet("""
                                             QPushButton { 
@@ -132,22 +156,8 @@ class GameHolder:
         self.buttonPanel.addWidget(self.quitButton)
         self.connectButtons()
 
-    def locateSurroundingFields(self, baseX, baseY, level=None):
-        checks = [-1, 1]
-        valid = []
-
-        for i in checks:
-            if 1 <= self.letterToIndex[baseX] + i <= 10:
-                valid.append((self.indexToLetter[self.letterToIndex[baseX] + i], baseY))
-
-            if 1 <= baseY + i <= 10:
-                valid.append((baseX, baseY + i))
-
-
-        # (left, down, right, up)
-        return valid
-
     def customizeButtonForShip(self, x, y):
+        print("gh.customForShip")
         self.selectionBoard[x][y].setStyleSheet("""
                                                     QPushButton {
                                                         background-color: lightblue;
@@ -168,55 +178,57 @@ class GameHolder:
         pass
 
     def styleShipField(self):
+        print("gh.styleShipField")
         pass
 
     def enableBoardFields(self):
+        print("gh.enableBoardFields")
         self.styleShipField()
         for i in range(11):
             for j in range(11):
-                if i != 0 and j != 0 and (self.indexToLetter[i], j) not in self.forbiddenFields:
+                if i != 0 and j != 0 and (i, j) not in self.forbiddenFields:
                     self.selectionBoard[i][j].setEnabled(True)
 
     def pullApproval(self):
+        print("gh.pullApproval")
         if self.shipMg.getShipAwaitingApproval() == self.shipMg.getCurrentShipOption():
-            print(self.forbiddenFields, self.shipFields)
+            print(self.forbiddenFields)
             self.shipMg.shipSelectionConfirmed()
             self.enableBoardFields()
             self.shipMg.switchShipOptions(False)
 
-            #forbidd surrouindingsa
-        # style the ship field
         # unlock board without ship and fields arround it
-        # resume
-
-
 
     def updateNextMoveOptions(self, baseX, baseY):
+        print("gh.updateNextMoveOptions")
         if self.shipMg.getCurrentShipOption() != 1:
             pass
         else:
             self.shipMg.setShipAwaitingApproval(self.shipMg.getCurrentShipOption())
-            self.forbiddenFields.append((baseX, baseY))
 
-
+            [self.forbiddenFields.append((x[0], x[1])) for x
+             in locateSurroundingFields(self.letterToIndex[baseX], baseY)]
+            self.forbiddenFields.append((self.letterToIndex[baseX], baseY))
 
     def markShipFields(self, x, y):
+        print("gh.markShipFields")
         if self.shipMg.getCurrentShipOption() is not None:
+            self.shipMg.shipFieldSelected(x, y)
+            print(locateSurroundingFields(self.letterToIndex[x], y), (x, y))
             self.disableBoardFields()
-            self.shipMg.switchShipOptions(True)
-            self.shipFields.append((x, y))
+            #self.shipFields.append((x, y))
             self.customizeButtonForShip(self.letterToIndex[x], y)
             self.updateNextMoveOptions(x, y)
 
-
-
     def disableBoardFields(self):
+        print("gh.disableBoardFields")
         for i in range(11):
             for j in range(11):
                 if self.selectionBoard[i][j].isEnabled():
                     self.selectionBoard[i][j].setEnabled(False)
 
     def initSelectionBoard(self):
+        print("gh.initSelectionBoard")
         az = ['', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J']
         nums = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '']
         self.leftSide.addLayout(self.boardLayout)
@@ -266,14 +278,13 @@ class GameHolder:
                                                                     }
                                                                 """)
                         self.selectionBoard[i][j].clicked.connect(lambda checked, r=az[i], c=j:
-                                                                  (self.shipMg.shipFieldSelected(r, c),
-                                                                   self.markShipFields(r, c))
-                                                                  )
+                                                                  self.markShipFields(r, c))
 
                 self.selectionBoard[i][j].setFixedSize(60, 55)
                 self.boardLayout.addWidget(self.selectionBoard[i][j], i, j)
 
     def startState(self):
+        print("gh.startState")
         self.tabs.setLayout(self.layout)
         self.window.setCentralWidget(self.tabs)
 

@@ -20,7 +20,7 @@ class ShipManager:
     def __init__(self):
         self.currentShipOption = None
         self.remainingShipSelections = None
-        self.currentShipSelectionFields = []
+        self.shipFields = []
         self.shipAwaitingApproval = 0
 
         self.remainingShipOneSelections = 4
@@ -44,6 +44,9 @@ class ShipManager:
         self.guiShipSelector.idClicked.connect(self.shipOptionSelected)
 
 
+    def appendShipField(self, x, y):
+        pass
+
     def getRemainingShipSelections(self):
         return self.remainingShipSelections
 
@@ -58,6 +61,7 @@ class ShipManager:
 
 
     def updateShipOptionLabel(self, opt):
+        print("mg.updateLabels")
         if opt == 1:
             self.remainingShipOneSelections -= 1
             self.shipOneOption.setText(f'Single-masted ship, {self.remainingShipOneSelections} remaining')
@@ -85,12 +89,18 @@ class ShipManager:
 
 
     def switchShipOptions(self, bit):
-        self.shipOneOption.setDisabled(bit)
-        self.shipTwoOption.setDisabled(bit)
-        self.shipThreeOption.setDisabled(bit)
-        self.shipFourOption.setDisabled(bit)
+        print("mg.switchOptions")
+        if self.remainingShipOneSelections > 0:
+            self.shipOneOption.setDisabled(bit)
+        if self.remainingShipTwoSelections > 0:
+            self.shipTwoOption.setDisabled(bit)
+        if self.remainingShipThreeSelections > 0:
+            self.shipThreeOption.setDisabled(bit)
+        if self.remainingShipFourSelections > 0:
+            self.shipFourOption.setDisabled(bit)
 
     def uncheckShipOptions(self):
+        print("mg.uncheckShipOptions")
         self.guiShipSelector.setExclusive(False)
         for button in self.guiShipSelector.buttons():
             button.setChecked(False)
@@ -98,9 +108,11 @@ class ShipManager:
 
 
     def shipSelectionConfirmed(self):
+        print("mg.selectionConfirmed")
         if self.shipAwaitingApproval != 0:
-            self.remainingShipSelections -= 1
-            #del current field selections
+            if self.remainingShipSelections > 0:
+                self.remainingShipSelections -= 1
+
             self.shipAwaitingApproval = 0
 
             if self.remainingShipSelections == 0:
@@ -122,18 +134,21 @@ class ShipManager:
     # x == a,b,c,...,j
     # y == 1..10
     def shipFieldSelected(self, x, y):
-        if self.currentShipOption is not None:
-            if self.remainingShipSelections == 0:
-                self.shipAwaitingApproval = self.currentShipOption
-        else:
-            pass
+        print("mg.shipFieldSelected")
+        self.switchShipOptions(True)
+        if self.remainingShipSelections == 0:
+            self.shipAwaitingApproval = self.currentShipOption
+            self.appendShipField(x, y)
+
 
 
 
     def getShipOptionButtons(self):
+        print("mg.getShipOptionButtons")
         return [self.shipFourOption, self.shipThreeOption, self.shipTwoOption, self.shipOneOption]
 
     def shipOptionSelected(self, uuid):
+        print("mg.shipOptionSelected")
         self.currentShipOption = uuid
         self.remainingShipSelections = uuid
 
