@@ -2,13 +2,22 @@ import shipManager
 from shipManager import QtWidgets
 
 
-def locateSurroundingFields(baseX, baseY, level=None):
+def locateSurroundingFields(baseX, baseY, mode):
     print("gh.locateSurr")
-    directions = [
-        (-1, -1), (-1, 0), (-1, 1),  # Top-left, Top, Top-right
-        (0, -1), (0, 1),  # Left,        Right
-        (1, -1), (1, 0), (1, 1)  # Bottom-left, Bottom, Bottom-right
-    ]
+
+    if mode == "surround":
+        # Top-left, Top, Top-right, Right, Bottom-left, Bottom, Bottom-right
+        directions = [(-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1)]
+
+    elif mode == "leftRight":
+        # Top, right, left, bottom
+        directions = [(-1, 0), (0, -1), (0, 1), (1, 0)]
+    elif mode == "diagonals":
+        # Top-left, Top-right, bottom-left, bottom-right
+        directions = [(-1, -1), (-1, 1), (1, -1), (1, 1)]
+
+    else:
+        exit(69)
 
     surrounding_fields = [
         (baseX + dx, baseY + dy) for dx, dy in directions
@@ -39,8 +48,8 @@ class GameHolder:
         self.quitButton = QtWidgets.QPushButton("Exit")
 
         self.boardLayout = QtWidgets.QGridLayout()
-        self.shipOptions = []
         self.forbiddenFields = []
+        self.lastFieldSelections = []
 
         self.tab1 = QtWidgets.QWidget()
         self.tab2 = QtWidgets.QWidget()
@@ -55,8 +64,10 @@ class GameHolder:
         self.letterToIndex = {
             'A': 1, 'B': 2, 'C': 3, 'D': 4, 'E': 5, 'F': 6, 'G': 7, 'H': 8, 'I': 9, 'J': 10
         }
-
         self.indexToLetter = {v: k for k, v in self.letterToIndex.items()}
+
+        self.moveHistory = []
+        self.nextFieldOptions = []
 
     def getWindow(self):
         print("gh.getWindow")
@@ -174,25 +185,16 @@ class GameHolder:
                                                     }
                                                 """)
 
-    def customizeButtonForNextMove(self):
-        pass
-
-    def styleShipField(self):
-        print("gh.styleShipField")
-        pass
-
     def enableBoardFields(self):
         print("gh.enableBoardFields")
-        self.styleShipField()
         for i in range(11):
             for j in range(11):
-                if i != 0 and j != 0 and (i, j) not in self.forbiddenFields:
+                if i != 0 and j != 0 and ((i, j) not in self.forbiddenFields):
                     self.selectionBoard[i][j].setEnabled(True)
 
     def pullApproval(self):
         print("gh.pullApproval")
         if self.shipMg.getShipAwaitingApproval() == self.shipMg.getCurrentShipOption():
-            print(self.forbiddenFields)
             self.shipMg.shipSelectionConfirmed()
             self.enableBoardFields()
             self.shipMg.switchShipOptions(False)
@@ -201,23 +203,40 @@ class GameHolder:
 
     def updateNextMoveOptions(self, baseX, baseY):
         print("gh.updateNextMoveOptions")
+
         if self.shipMg.getCurrentShipOption() != 1:
-            pass
+            # enable fields in row and col for selected +-3,
+            # append to moveHistory the amount of forbidden to remove if back occurs,
+
+            self.forbiddenFields.append((self.letterToIndex[baseX], baseY))
+            [self.forbiddenFields.append((x[0], x[1])) for x
+             in locateSurroundingFields(self.letterToIndex[baseX], baseY, "diagonals")]
+
+            if self.shipMg.getRemainingShipSelections() != 0:
+                self.enableBoardFields()
+            else:
+                for x in self.moveHistory:
+                    for y in locateSurroundingFields(self.letterToIndex[x[0]], x[1], "leftRight"):
+                        if y not in self.forbiddenFields:
+                            self.forbiddenFields.append(y)
+
+                # forbid right/left/top/bot
+
         else:
             self.shipMg.setShipAwaitingApproval(self.shipMg.getCurrentShipOption())
-
             [self.forbiddenFields.append((x[0], x[1])) for x
-             in locateSurroundingFields(self.letterToIndex[baseX], baseY)]
+             in locateSurroundingFields(self.letterToIndex[baseX], baseY, "surround")]
             self.forbiddenFields.append((self.letterToIndex[baseX], baseY))
 
     def markShipFields(self, x, y):
         print("gh.markShipFields")
         if self.shipMg.getCurrentShipOption() is not None:
             self.shipMg.shipFieldSelected(x, y)
-            print(locateSurroundingFields(self.letterToIndex[x], y), (x, y))
-            self.disableBoardFields()
-            #self.shipFields.append((x, y))
+
+            # self.shipFields.append((x, y))
             self.customizeButtonForShip(self.letterToIndex[x], y)
+            self.moveHistory.append((x, y))
+            self.disableBoardFields()
             self.updateNextMoveOptions(x, y)
 
     def disableBoardFields(self):

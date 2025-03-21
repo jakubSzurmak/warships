@@ -12,7 +12,7 @@ class Ship:
         # __del__ change color of tiles on board
 
     def __del__(self):
-            pass
+        pass
 
 
 class ShipManager:
@@ -20,7 +20,10 @@ class ShipManager:
     def __init__(self):
         self.currentShipOption = None
         self.remainingShipSelections = None
+        # for 4 ship fields number 4 to appendix for popping purposes, read stack backwards
         self.shipFields = []
+        self.shipAppendixStack = []
+
         self.shipAwaitingApproval = 0
 
         self.remainingShipOneSelections = 4
@@ -43,7 +46,6 @@ class ShipManager:
 
         self.guiShipSelector.idClicked.connect(self.shipOptionSelected)
 
-
     def appendShipField(self, x, y):
         pass
 
@@ -58,7 +60,6 @@ class ShipManager:
 
     def getShipAwaitingApproval(self):
         return self.shipAwaitingApproval
-
 
     def updateShipOptionLabel(self, opt):
         print("mg.updateLabels")
@@ -75,18 +76,16 @@ class ShipManager:
         elif opt == 3:
             self.remainingShipThreeSelections -= 1
             self.shipThreeOption.setText(f'Three-masted ship, '
-                                                      f'{self.remainingShipThreeSelections} remaining')
+                                         f'{self.remainingShipThreeSelections} remaining')
             if self.remainingShipThreeSelections == 0:
                 self.shipThreeOption.setDisabled(True)
         elif opt == 4:
             self.remainingShipFourSelections -= 1
             self.shipFourOption.setText(f'Four-masted ship, '
-                                                     f'{self.remainingShipFourSelections} remaining')
+                                        f'{self.remainingShipFourSelections} remaining')
             self.shipFourOption.setDisabled(True)
         else:
             exit(69)
-
-
 
     def switchShipOptions(self, bit):
         print("mg.switchOptions")
@@ -106,23 +105,29 @@ class ShipManager:
             button.setChecked(False)
         self.guiShipSelector.setExclusive(True)
 
+    def shipSelectionContinuation(self):
+        self.remainingShipSelections -= 1
+        self.updateShipOptionLabel(self.currentShipOption)
+        pass
 
     def shipSelectionConfirmed(self):
         print("mg.selectionConfirmed")
+
         if self.shipAwaitingApproval != 0:
             if self.remainingShipSelections > 0:
-                self.remainingShipSelections -= 1
+                pass
+                # self.remainingShipSelections -= 1 mv to shipFieldSelected
 
             self.shipAwaitingApproval = 0
 
             if self.remainingShipSelections == 0:
                 self.updateShipOptionLabel(self.currentShipOption)
 
-            #reset current option
+            self.shipAppendixStack.append(self.currentShipOption)
+            # reset current option
             self.currentShipOption = None
             self.uncheckShipOptions()
             pass
-
 
     def shipSelectionRollback(self):
         pass
@@ -130,18 +135,16 @@ class ShipManager:
     def shipsSelectionRestart(self):
         pass
 
-
     # x == a,b,c,...,j
     # y == 1..10
     def shipFieldSelected(self, x, y):
         print("mg.shipFieldSelected")
+        # disabled - true
         self.switchShipOptions(True)
+        self.remainingShipSelections -= 1
+        self.appendShipField(x, y)
         if self.remainingShipSelections == 0:
             self.shipAwaitingApproval = self.currentShipOption
-            self.appendShipField(x, y)
-
-
-
 
     def getShipOptionButtons(self):
         print("mg.getShipOptionButtons")
@@ -152,5 +155,4 @@ class ShipManager:
         self.currentShipOption = uuid
         self.remainingShipSelections = uuid
 
-        #self.disableButtons()
-
+        # self.disableButtons()
