@@ -1,15 +1,12 @@
 from PySide6 import QtWidgets
 
 
+# jezeli uzgadniamy że informujemy o tym ile przeciwnikowi zostało poszczególnych statkow to potrzebne
+# jako kontener na pola jak nie to do usunięcia
 class Ship:
     def __init__(self, size, fields):
         self.size = size
         self.fields = fields
-
-    def decreaseSize(self):
-        self.size -= 1
-        # ship is hit, take size -= 1 and change according field, when size 0 call
-        # __del__ change color of tiles on board
 
     def __del__(self):
         pass
@@ -47,7 +44,13 @@ class ShipManager:
         self.guiShipSelector.idClicked.connect(self.shipOptionSelected)
 
     def appendShipField(self, x, y):
-        pass
+        self.shipFields.append((x, y))
+
+    def getShipStack(self):
+        return self.shipAppendixStack
+
+    def getShipFields(self):
+        return self.shipFields
 
     def getRemainingShipSelections(self):
         return self.remainingShipSelections
@@ -62,7 +65,7 @@ class ShipManager:
         return self.shipAwaitingApproval
 
     def updateShipOptionLabel(self, opt):
-        print("mg.updateLabels")
+        # print("mg.updateLabels")
         if opt == 1:
             self.remainingShipOneSelections -= 1
             self.shipOneOption.setText(f'Single-masted ship, {self.remainingShipOneSelections} remaining')
@@ -88,7 +91,7 @@ class ShipManager:
             exit(69)
 
     def switchShipOptions(self, bit):
-        print("mg.switchOptions")
+        # print("mg.switchOptions")
         if self.remainingShipOneSelections > 0:
             self.shipOneOption.setDisabled(bit)
         if self.remainingShipTwoSelections > 0:
@@ -99,7 +102,7 @@ class ShipManager:
             self.shipFourOption.setDisabled(bit)
 
     def uncheckShipOptions(self):
-        print("mg.uncheckShipOptions")
+        # print("mg.uncheckShipOptions")
         self.guiShipSelector.setExclusive(False)
         for button in self.guiShipSelector.buttons():
             button.setChecked(False)
@@ -111,7 +114,7 @@ class ShipManager:
         pass
 
     def shipSelectionConfirmed(self):
-        print("mg.selectionConfirmed")
+        # print("mg.selectionConfirmed")
 
         if self.shipAwaitingApproval != 0:
             if self.remainingShipSelections > 0:
@@ -138,8 +141,7 @@ class ShipManager:
     # x == a,b,c,...,j
     # y == 1..10
     def shipFieldSelected(self, x, y):
-        print("mg.shipFieldSelected")
-        # disabled - true
+        # print("mg.shipFieldSelected")
         self.switchShipOptions(True)
         self.remainingShipSelections -= 1
         self.appendShipField(x, y)
@@ -147,12 +149,10 @@ class ShipManager:
             self.shipAwaitingApproval = self.currentShipOption
 
     def getShipOptionButtons(self):
-        print("mg.getShipOptionButtons")
+        # print("mg.getShipOptionButtons")
         return [self.shipFourOption, self.shipThreeOption, self.shipTwoOption, self.shipOneOption]
 
     def shipOptionSelected(self, uuid):
-        print("mg.shipOptionSelected")
+        # print("mg.shipOptionSelected")
         self.currentShipOption = uuid
         self.remainingShipSelections = uuid
-
-        # self.disableButtons()
