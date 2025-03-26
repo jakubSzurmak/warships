@@ -64,26 +64,26 @@ class ShipManager:
     def getShipAwaitingApproval(self):
         return self.shipAwaitingApproval
 
-    def updateShipOptionLabel(self, opt):
+    def updateShipOptionLabel(self, opt, i):
         # print("mg.updateLabels")
         if opt == 1:
-            self.remainingShipOneSelections -= 1
+            self.remainingShipOneSelections += i
             self.shipOneOption.setText(f'Single-masted ship, {self.remainingShipOneSelections} remaining')
             if self.remainingShipOneSelections == 0:
                 self.shipOneOption.setDisabled(True)
         elif opt == 2:
-            self.remainingShipTwoSelections -= 1
+            self.remainingShipTwoSelections += i
             self.shipTwoOption.setText(f'Two-masted ship, {self.remainingShipTwoSelections} remaining')
             if self.remainingShipTwoSelections == 0:
                 self.shipTwoOption.setDisabled(True)
         elif opt == 3:
-            self.remainingShipThreeSelections -= 1
+            self.remainingShipThreeSelections += i
             self.shipThreeOption.setText(f'Three-masted ship, '
                                          f'{self.remainingShipThreeSelections} remaining')
             if self.remainingShipThreeSelections == 0:
                 self.shipThreeOption.setDisabled(True)
         elif opt == 4:
-            self.remainingShipFourSelections -= 1
+            self.remainingShipFourSelections += i
             self.shipFourOption.setText(f'Four-masted ship, '
                                         f'{self.remainingShipFourSelections} remaining')
             self.shipFourOption.setDisabled(True)
@@ -110,33 +110,46 @@ class ShipManager:
 
     def shipSelectionContinuation(self):
         self.remainingShipSelections -= 1
-        self.updateShipOptionLabel(self.currentShipOption)
-        pass
+        self.updateShipOptionLabel(self.currentShipOption, -1)
 
     def shipSelectionConfirmed(self):
         # print("mg.selectionConfirmed")
 
         if self.shipAwaitingApproval != 0:
-            if self.remainingShipSelections > 0:
-                pass
-                # self.remainingShipSelections -= 1 mv to shipFieldSelected
 
             self.shipAwaitingApproval = 0
 
             if self.remainingShipSelections == 0:
-                self.updateShipOptionLabel(self.currentShipOption)
+                self.updateShipOptionLabel(self.currentShipOption, -1)
 
             self.shipAppendixStack.append(self.currentShipOption)
             # reset current option
             self.currentShipOption = None
             self.uncheckShipOptions()
-            pass
+
 
     def shipSelectionRollback(self):
         pass
 
+    def resetOptions(self):
+        self.shipOneOption.setText(f'Single-masted ship, {self.remainingShipOneSelections} remaining')
+        self.shipTwoOption.setText(f'Two-masted ship, {self.remainingShipTwoSelections} remaining')
+        self.shipThreeOption.setText(f'Three-masted ship, {self.remainingShipThreeSelections} remaining')
+        self.shipFourOption.setText(f'Four-masted ship, {self.remainingShipFourSelections} remaining')
+        self.switchShipOptions(False)
+
     def shipsSelectionRestart(self):
-        pass
+        self.currentShipOption = None
+        self.remainingShipSelections = None
+        self.shipFields = []
+        self.shipAppendixStack = []
+        self.shipAwaitingApproval = 0
+        self.remainingShipOneSelections = 4
+        self.remainingShipTwoSelections = 3
+        self.remainingShipThreeSelections = 2
+        self.remainingShipFourSelections = 1
+        self.resetOptions()
+        self.uncheckShipOptions()
 
     # x == a,b,c,...,j
     # y == 1..10

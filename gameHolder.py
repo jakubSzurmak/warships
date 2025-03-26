@@ -49,7 +49,6 @@ class GameHolder:
 
         self.boardLayout = QtWidgets.QGridLayout()
         self.forbiddenFields = []
-        self.lastFieldSelections = []
 
         self.tab1 = QtWidgets.QWidget()
         self.tab2 = QtWidgets.QWidget()
@@ -101,13 +100,13 @@ class GameHolder:
         if self.tabs.isTabEnabled(0):
             self.acceptButton.clicked.connect(self.pullApproval)
             self.backButton.clicked.connect(self.shipMg.shipSelectionRollback)
-            self.resetButton.clicked.connect(self.shipMg.shipsSelectionRestart)
+            self.resetButton.clicked.connect(self.resetSelectionState)
             self.quitButton.clicked.connect(quit)
         else:
             pass
 
     def initButtonPanel(self):
-        print("gh.initButtonPanel")
+        #print("gh.initButtonPanel")
         self.layout.addLayout(self.buttonPanel, 1, 0, 1, 3)
         self.acceptButton.setStyleSheet("""
                                             QPushButton { 
@@ -184,6 +183,20 @@ class GameHolder:
                                                         border: 3px solid black;
                                                     }
                                                 """)
+
+    def resetSelectionState(self):
+        self.moveHistory = []
+        self.nextFieldOptions = []
+        self.forbiddenFields = []
+        self.enableBoardFields()
+        self.shipMg.shipsSelectionRestart()
+        for i in range(11):
+            self.setStockBoardBandStyle(i,0)
+            for j in range(11):
+                if j != 0 and i != 0:
+                    self.setStockBoardFieldStyle(i, j)
+
+
 
     def enableBoardFields(self):
         # print("gh.enableBoardFields")
@@ -272,6 +285,35 @@ class GameHolder:
                 if self.selectionBoard[i][j].isEnabled():
                     self.selectionBoard[i][j].setEnabled(False)
 
+    def setStockBoardBandStyle(self, x, y):
+        self.selectionBoard[x][y].setEnabled(False)
+        self.selectionBoard[x][y].setStyleSheet("""
+                                                 QPushButton {
+                                                     background-color: salmon;
+                                                     color: black;
+                                                     border: 3px solid black;
+                                                     font-size: 20px;
+                                                     padding: 0px;
+                                                 }
+                                             """)
+
+    def setStockBoardFieldStyle(self, x, y):
+        self.selectionBoard[x][y].setStyleSheet("""
+                                                                            QPushButton {
+                                                                                background-color: lightblue;
+                                                                                border: 2px solid black;
+                                                                                font-size: 16px;
+                                                                                padding: 0px;
+                                                                            }
+                                                                            QPushButton:hover {
+                                                                                background-color: orange;
+                                                                            }
+                                                                             QPushButton:disabled {
+                                                                                background-color: gray;
+                                                                                border: 2px solid darkgray;
+                                                                            }
+                                                                        """)
+
     def initSelectionBoard(self):
         # print("gh.initSelectionBoard")
         az = ['', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J']
@@ -280,48 +322,16 @@ class GameHolder:
         self.boardLayout.setSpacing(0)
         for i in range(len(az)):
             self.selectionBoard[i].append(QtWidgets.QPushButton(az[i]))
-            self.selectionBoard[i][0].setEnabled(False)
-            self.selectionBoard[i][0].setStyleSheet("""
-                                                       QPushButton {
-                                                           background-color: salmon;
-                                                           color: black;
-                                                           border: 3px solid black;
-                                                           font-size: 20px;
-                                                           padding: 0px;
-                                                       }
-                                                   """)
+            self.setStockBoardBandStyle(i, 0)
             for j in range(len(nums)):
                 if i == 0:
                     self.selectionBoard[i].append(QtWidgets.QPushButton(nums[j]))
-                    self.selectionBoard[i][j].setStyleSheet("""
-                                                                QPushButton {
-                                                                    background-color: salmon;
-                                                                    color: black;
-                                                                    border: 3px solid black;
-                                                                    font-size: 20px;
-                                                                    padding: 0px;
-                                                                }
-                                                            """)
-                    self.selectionBoard[i][j].setEnabled(False)
+                    self.setStockBoardBandStyle(i,j)
 
                 else:
                     self.selectionBoard[i].append(QtWidgets.QPushButton())
                     if j != 0:
-                        self.selectionBoard[i][j].setStyleSheet("""
-                                                                    QPushButton {
-                                                                        background-color: lightblue;
-                                                                        border: 2px solid black;
-                                                                        font-size: 16px;
-                                                                        padding: 0px;
-                                                                    }
-                                                                    QPushButton:hover {
-                                                                        background-color: orange;
-                                                                    }
-                                                                     QPushButton:disabled {
-                                                                        background-color: gray;
-                                                                        border: 2px solid darkgray;
-                                                                    }
-                                                                """)
+                        self.setStockBoardFieldStyle(i, j)
                         self.selectionBoard[i][j].clicked.connect(lambda checked, r=az[i], c=j:
                                                                   self.markShipFields(r, c))
 
