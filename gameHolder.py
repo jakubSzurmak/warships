@@ -99,14 +99,14 @@ class GameHolder:
         # print("gh.initConnect")
         if self.tabs.isTabEnabled(0):
             self.acceptButton.clicked.connect(self.pullApproval)
-            self.backButton.clicked.connect(self.shipMg.shipSelectionRollback)
+            self.backButton.clicked.connect(self.revertSingleSelection)
             self.resetButton.clicked.connect(self.resetSelectionState)
             self.quitButton.clicked.connect(quit)
         else:
             pass
 
     def initButtonPanel(self):
-        #print("gh.initButtonPanel")
+        # print("gh.initButtonPanel")
         self.layout.addLayout(self.buttonPanel, 1, 0, 1, 3)
         self.acceptButton.setStyleSheet("""
                                             QPushButton { 
@@ -184,6 +184,42 @@ class GameHolder:
                                                     }
                                                 """)
 
+    #To change
+    def revertSingleSelection(self):
+        self.forbiddenFields = sorted(self.forbiddenFields)
+        lastFields = self.shipMg.shipSelectionRollback()
+        if len(lastFields) == 1:
+            mode = "surround"
+        else:
+            mode = "diagonals"
+            youngest, oldest = sorted(lastFields)[0], sorted(lastFields)[-1]
+            print("YN", youngest, oldest)
+
+            if youngest[0] == oldest[0]:
+                if (self.letterToIndex[youngest[0]], youngest[1]-1) in self.forbiddenFields:
+                    self.forbiddenFields.remove((self.letterToIndex[youngest[0]], youngest[1]-1))
+
+                if (self.letterToIndex[oldest[0]], oldest[1]+1) in self.forbiddenFields:
+                    self.forbiddenFields.remove((self.letterToIndex[oldest[0]], oldest[1] + 1))
+
+            if youngest[1] == oldest[1]:
+                temp = self.letterToIndex[youngest[0]]
+                if (temp - 1, youngest[1]) in self.forbiddenFields:
+                    self.forbiddenFields.remove((temp - 1, youngest[1]))
+
+                if (self.letterToIndex[oldest[0]] + 1, oldest[1]) in self.forbiddenFields:
+                    self.forbiddenFields.remove((self.letterToIndex[oldest[0]] + 1, oldest[1]))
+
+        for i in lastFields:
+            self.forbiddenFields.remove((self.letterToIndex[i[0]], i[1]))
+            self.setStockBoardFieldStyle(self.letterToIndex[i[0]], i[1])
+
+            for j in locateSurroundingFields(self.letterToIndex[i[0]], i[1], mode):
+                if j in self.forbiddenFields:
+                    self.forbiddenFields.remove((j[0], j[1]))
+        print(sorted(self.forbiddenFields))
+        self.enableBoardFields()
+
     def resetSelectionState(self):
         self.moveHistory = []
         self.nextFieldOptions = []
@@ -191,12 +227,10 @@ class GameHolder:
         self.enableBoardFields()
         self.shipMg.shipsSelectionRestart()
         for i in range(11):
-            self.setStockBoardBandStyle(i,0)
+            self.setStockBoardBandStyle(i, 0)
             for j in range(11):
                 if j != 0 and i != 0:
                     self.setStockBoardFieldStyle(i, j)
-
-
 
     def enableBoardFields(self):
         # print("gh.enableBoardFields")
@@ -211,25 +245,20 @@ class GameHolder:
             self.shipMg.shipSelectionConfirmed()
             self.enableBoardFields()
             self.shipMg.switchShipOptions(False)
+            self.moveHistory = []
 
         # unlock board without ship and fields arround it
 
     def calculateYoungestOldest(self):
         comp = []
-        if len(self.shipMg.shipAppendixStack) == 0:
-            offsetIndex = 0
-        else:
-            offsetIndex = sum(self.shipMg.shipAppendixStack)
-
-        [comp.append(i) for i in self.moveHistory[offsetIndex:]]
+        [comp.append(i) for i in self.moveHistory]
         comp = sorted(comp)
-
         return (comp[0], comp[-1])
 
     def activateNextPossibleFields(self, selectionNum, baseX, baseY):
         if selectionNum == 1:
             [self.selectionBoard[x[0]][x[1]].setEnabled(True) for x
-             in locateSurroundingFields(self.letterToIndex[baseX], baseY, "surround") if (x[0], x[1]) not in
+             in locateSurroundingFields(self.letterToIndex[baseX], baseY, "leftRight") if (x[0], x[1]) not in
              self.forbiddenFields and (x[0], x[1]) not in self.moveHistory]
         else:
             firstBlock, lastBlock = self.calculateYoungestOldest()
@@ -254,29 +283,31 @@ class GameHolder:
                 self.activateNextPossibleFields((self.shipMg.getCurrentShipOption() -
                                                  self.shipMg.getRemainingShipSelections()), baseX, baseY
                                                 )
-
             else:
-                for x in self.moveHistory:
-                    for y in locateSurroundingFields(self.letterToIndex[x[0]], x[1], "surround"):
-                        if y not in self.forbiddenFields:
-                            self.forbiddenFields.append(y)
-
+                youngest, oldest = self.calculateYoungestOldest()
+                for y in locateSurroundingFields(self.letterToIndex[oldest[0]], oldest[1], "leftRight"):
+                    if y not in self.forbiddenFields:
+                        self.forbiddenFields.append(y)
+                for z in locateSurroundingFields(self.letterToIndex[youngest[0]], youngest[1], "leftRight"):
+                    if z not in self.forbiddenFields:
+                        self.forbiddenFields.append(z)
         else:
-            self.shipMg.setShipAwaitingApproval(self.shipMg.getCurrentShipOption())
+            self.forbiddenFields.append((self.letterToIndex[baseX], baseY))
             [self.forbiddenFields.append((x[0], x[1])) for x
              in locateSurroundingFields(self.letterToIndex[baseX], baseY, "surround")]
-            self.forbiddenFields.append((self.letterToIndex[baseX], baseY))
+
+            self.shipMg.setShipAwaitingApproval(self.shipMg.getCurrentShipOption())
+
 
     def markShipFields(self, x, y):
         # print("gh.markShipFields")
         if self.shipMg.getCurrentShipOption() is not None:
             self.shipMg.shipFieldSelected(x, y)
-
-            # self.shipFields.append((x, y))
             self.customizeButtonForShip(self.letterToIndex[x], y)
             self.moveHistory.append((x, y))
             self.disableBoardFields()
             self.updateNextMoveOptions(x, y)
+            print("forbid: ", sorted(self.forbiddenFields))
 
     def disableBoardFields(self):
         # print("gh.disableBoardFields")
@@ -299,20 +330,20 @@ class GameHolder:
 
     def setStockBoardFieldStyle(self, x, y):
         self.selectionBoard[x][y].setStyleSheet("""
-                                                                            QPushButton {
-                                                                                background-color: lightblue;
-                                                                                border: 2px solid black;
-                                                                                font-size: 16px;
-                                                                                padding: 0px;
-                                                                            }
-                                                                            QPushButton:hover {
-                                                                                background-color: orange;
-                                                                            }
-                                                                             QPushButton:disabled {
-                                                                                background-color: gray;
-                                                                                border: 2px solid darkgray;
-                                                                            }
-                                                                        """)
+                                                QPushButton {
+                                                    background-color: lightblue;
+                                                    border: 2px solid black;
+                                                    font-size: 16px;
+                                                    padding: 0px;
+                                                }
+                                                QPushButton:hover {
+                                                    background-color: orange;
+                                                }
+                                                 QPushButton:disabled {
+                                                    background-color: gray;
+                                                    border: 2px solid darkgray;
+                                                }
+                                            """)
 
     def initSelectionBoard(self):
         # print("gh.initSelectionBoard")
@@ -326,7 +357,7 @@ class GameHolder:
             for j in range(len(nums)):
                 if i == 0:
                     self.selectionBoard[i].append(QtWidgets.QPushButton(nums[j]))
-                    self.setStockBoardBandStyle(i,j)
+                    self.setStockBoardBandStyle(i, j)
 
                 else:
                     self.selectionBoard[i].append(QtWidgets.QPushButton())

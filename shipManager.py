@@ -46,12 +46,6 @@ class ShipManager:
     def appendShipField(self, x, y):
         self.shipFields.append((x, y))
 
-    def getShipStack(self):
-        return self.shipAppendixStack
-
-    def getShipFields(self):
-        return self.shipFields
-
     def getRemainingShipSelections(self):
         return self.remainingShipSelections
 
@@ -108,28 +102,24 @@ class ShipManager:
             button.setChecked(False)
         self.guiShipSelector.setExclusive(True)
 
-    def shipSelectionContinuation(self):
-        self.remainingShipSelections -= 1
-        self.updateShipOptionLabel(self.currentShipOption, -1)
-
     def shipSelectionConfirmed(self):
         # print("mg.selectionConfirmed")
-
         if self.shipAwaitingApproval != 0:
-
             self.shipAwaitingApproval = 0
 
             if self.remainingShipSelections == 0:
                 self.updateShipOptionLabel(self.currentShipOption, -1)
 
             self.shipAppendixStack.append(self.currentShipOption)
-            # reset current option
             self.currentShipOption = None
             self.uncheckShipOptions()
 
-
     def shipSelectionRollback(self):
-        pass
+        rollbackFields = []
+        for i in self.shipFields[-self.shipAppendixStack.pop(-1):]:
+            self.shipFields.remove(i)
+            rollbackFields.append(i)
+        return rollbackFields
 
     def resetOptions(self):
         self.shipOneOption.setText(f'Single-masted ship, {self.remainingShipOneSelections} remaining')
@@ -159,7 +149,7 @@ class ShipManager:
         self.remainingShipSelections -= 1
         self.appendShipField(x, y)
         if self.remainingShipSelections == 0:
-            self.shipAwaitingApproval = self.currentShipOption
+            self.setShipAwaitingApproval(self.currentShipOption)
 
     def getShipOptionButtons(self):
         # print("mg.getShipOptionButtons")
