@@ -84,6 +84,7 @@ class ShipManager:
         else:
             exit(69)
 
+    # Lekko na odwrót do możliwej poprawki tak jak litery i cyfry w gameholder, teraz switchShipOptions(True) wyłącza XD
     def switchShipOptions(self, bit):
         # print("mg.switchOptions")
         if self.remainingShipOneSelections > 0:
@@ -95,6 +96,7 @@ class ShipManager:
         if self.remainingShipFourSelections > 0:
             self.shipFourOption.setDisabled(bit)
 
+    # Removing ship option selection from radio buttons
     def uncheckShipOptions(self):
         # print("mg.uncheckShipOptions")
         self.guiShipSelector.setExclusive(False)
@@ -102,6 +104,7 @@ class ShipManager:
             button.setChecked(False)
         self.guiShipSelector.setExclusive(True)
 
+    # Preparing structures for next ship
     def shipSelectionConfirmed(self):
         # print("mg.selectionConfirmed")
         if self.shipAwaitingApproval != 0:
@@ -114,6 +117,7 @@ class ShipManager:
             self.currentShipOption = None
             self.uncheckShipOptions()
 
+    # Returning fields of lastly selected ship
     def shipSelectionRollback(self):
         rollbackFields = []
         for i in self.shipFields[-self.shipAppendixStack.pop(-1):]:

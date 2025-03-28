@@ -2,20 +2,19 @@ import shipManager
 from shipManager import QtWidgets
 
 
+# Static function for getting coordinates arround (baseX, baseY) field
 def locateSurroundingFields(baseX, baseY, mode):
     # print("gh.locateSurr")
 
     if mode == "surround":
         # Top-left, Top, Top-right, Right, Bottom-left, Bottom, Bottom-right
         directions = [(-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1)]
-
     elif mode == "leftRight":
         # Top, right, left, bottom
         directions = [(-1, 0), (0, -1), (0, 1), (1, 0)]
     elif mode == "diagonals":
         # Top-left, Top-right, bottom-left, bottom-right
         directions = [(-1, -1), (-1, 1), (1, -1), (1, 1)]
-
     else:
         exit(69)
 
@@ -35,6 +34,12 @@ class GameHolder:
         self.window = QtWidgets.QMainWindow()
         self.tabs = QtWidgets.QTabWidget()
 
+        # Layout scheme: Main window -> 2 tabs -> (1st tab):
+        # Main layout   3 columns and 2 rows
+        #               -> left side[ inside it boardLayout for keeping button grid] 2 columns in 1st row
+        #               -> right side[ inside it control labels for informing the user and selecting ship option]
+        #                   1 col in 1st row
+        #               -> Button panel underneath left and right side for every button 3 columns in 2nd row
         self.layout = QtWidgets.QGridLayout()
 
         self.leftSide = QtWidgets.QVBoxLayout()
@@ -48,6 +53,8 @@ class GameHolder:
         self.quitButton = QtWidgets.QPushButton("Exit")
 
         self.boardLayout = QtWidgets.QGridLayout()
+
+        # Array holding fields disallowed from user selection
         self.forbiddenFields = []
 
         self.tab1 = QtWidgets.QWidget()
@@ -56,17 +63,20 @@ class GameHolder:
         self.myOnlineStatus = QtWidgets.QLabel("You are online")
         self.enemyOnlineStatus = QtWidgets.QLabel("Enemy is Online")
 
+        # Dict for holding buttons on the board, access via matrix(row, column) not x,y
         self.selectionBoard = {
             0: [], 1: [], 2: [], 3: [], 4: [], 5: [], 6: [], 7: [], 8: [], 9: [], 10: []
         }
 
+        # Helping dictionary for converting indeces to letters and letters to indeces
+        # Row 0 is always inactive as it is the legend for displaying the column number -> A = 1
         self.letterToIndex = {
             'A': 1, 'B': 2, 'C': 3, 'D': 4, 'E': 5, 'F': 6, 'G': 7, 'H': 8, 'I': 9, 'J': 10
         }
         self.indexToLetter = {v: k for k, v in self.letterToIndex.items()}
 
+        # After selecting ship option each selected field lands here, flushed after confirmation
         self.moveHistory = []
-        self.nextFieldOptions = []
 
     def getWindow(self):
         # print("gh.getWindow")
@@ -79,9 +89,6 @@ class GameHolder:
     def getApp(self):
         # print("gh.getApp")
         return self.app
-
-    # save the sequence of ship options approvals, for ship back >
-    # pop each code and for code in ship fields remove and restyle
 
     def initRightSide(self):
         # print("gh.initRight")
@@ -97,13 +104,16 @@ class GameHolder:
 
     def connectButtons(self):
         # print("gh.initConnect")
+        # After connect don't do connect(f()) but connect(f) as f() calls immediately on init
         if self.tabs.isTabEnabled(0):
             self.acceptButton.clicked.connect(self.pullApproval)
             self.backButton.clicked.connect(self.revertSingleSelection)
             self.resetButton.clicked.connect(self.resetSelectionState)
             self.quitButton.clicked.connect(quit)
         else:
+            # To utilization or deletion
             pass
+
 
     def initButtonPanel(self):
         # print("gh.initButtonPanel")
@@ -184,17 +194,19 @@ class GameHolder:
                                                     }
                                                 """)
 
-    #To change
+    # After clicking Back button removes lastly approved ship
     def revertSingleSelection(self):
         self.forbiddenFields = sorted(self.forbiddenFields)
         lastFields = self.shipMg.shipSelectionRollback()
+
+        # If last ship was 1 block remove everything arround
         if len(lastFields) == 1:
             mode = "surround"
         else:
+            # To not duplicate removals we cannot remove all surroundings for all blocks, first and last block manually
+            # others automatically but only diagonals
             mode = "diagonals"
             youngest, oldest = sorted(lastFields)[0], sorted(lastFields)[-1]
-            print("YN", youngest, oldest)
-
             if youngest[0] == oldest[0]:
                 if (self.letterToIndex[youngest[0]], youngest[1]-1) in self.forbiddenFields:
                     self.forbiddenFields.remove((self.letterToIndex[youngest[0]], youngest[1]-1))
@@ -213,16 +225,16 @@ class GameHolder:
         for i in lastFields:
             self.forbiddenFields.remove((self.letterToIndex[i[0]], i[1]))
             self.setStockBoardFieldStyle(self.letterToIndex[i[0]], i[1])
-
             for j in locateSurroundingFields(self.letterToIndex[i[0]], i[1], mode):
                 if j in self.forbiddenFields:
                     self.forbiddenFields.remove((j[0], j[1]))
-        print(sorted(self.forbiddenFields))
+
+        # After freeing previously taken fields activate them
         self.enableBoardFields()
 
+    # Revert all changes, get back to start state
     def resetSelectionState(self):
         self.moveHistory = []
-        self.nextFieldOptions = []
         self.forbiddenFields = []
         self.enableBoardFields()
         self.shipMg.shipsSelectionRestart()
@@ -232,6 +244,7 @@ class GameHolder:
                 if j != 0 and i != 0:
                     self.setStockBoardFieldStyle(i, j)
 
+    # Enables buttons, makes them clickable
     def enableBoardFields(self):
         # print("gh.enableBoardFields")
         for i in range(11):
@@ -239,6 +252,7 @@ class GameHolder:
                 if i != 0 and j != 0 and ((i, j) not in self.forbiddenFields):
                     self.selectionBoard[i][j].setEnabled(True)
 
+    # After pressing accept check with shipMg if every block for this ship option is selected
     def pullApproval(self):
         # print("gh.pullApproval")
         if self.shipMg.getShipAwaitingApproval() == self.shipMg.getCurrentShipOption():
@@ -247,19 +261,21 @@ class GameHolder:
             self.shipMg.switchShipOptions(False)
             self.moveHistory = []
 
-        # unlock board without ship and fields arround it
-
+    # Calculate the edge fields of the ship
     def calculateYoungestOldest(self):
         comp = []
         [comp.append(i) for i in self.moveHistory]
         comp = sorted(comp)
         return (comp[0], comp[-1])
 
+
     def activateNextPossibleFields(self, selectionNum, baseX, baseY):
+        # After selecting the first block we can go in 4 directions: up, right, down, left. Below we enable those 4
         if selectionNum == 1:
             [self.selectionBoard[x[0]][x[1]].setEnabled(True) for x
              in locateSurroundingFields(self.letterToIndex[baseX], baseY, "leftRight") if (x[0], x[1]) not in
              self.forbiddenFields and (x[0], x[1]) not in self.moveHistory]
+        # From the 2nd move onwards we can only go in 2 directions: to the right/left of the edge blocks we enable them
         else:
             firstBlock, lastBlock = self.calculateYoungestOldest()
 
@@ -273,17 +289,24 @@ class GameHolder:
 
     def updateNextMoveOptions(self, baseX, baseY):
         # print("gh.updateNextMoveOptions")
-
         if self.shipMg.getCurrentShipOption() != 1:
+            # For larger ship options a slick idea is to block the ship field itself and the neighbouring diagonals
+            # in such way by placing 2 ship fields next to each other we are left with 2 not forbidden fields with no
+            # overlaps, those are addressed later
             self.forbiddenFields.append((self.letterToIndex[baseX], baseY))
             [self.forbiddenFields.append((x[0], x[1])) for x
              in locateSurroundingFields(self.letterToIndex[baseX], baseY, "diagonals")]
 
+            # Enabling fields that user can click next
             if self.shipMg.getRemainingShipSelections() != 0:
                 self.activateNextPossibleFields((self.shipMg.getCurrentShipOption() -
                                                  self.shipMg.getRemainingShipSelections()), baseX, baseY
                                                 )
             else:
+                # Here we address the 2 unblocked fields mentioned above, for youngest and oldest we pull their
+                # neighbours (up, right, down, left) and check if they are forbidden if not fobidd
+                # We allow ourselves such solution as out arrays will never exceed 100 elements so it is efficient
+                # memory and time wise
                 youngest, oldest = self.calculateYoungestOldest()
                 for y in locateSurroundingFields(self.letterToIndex[oldest[0]], oldest[1], "leftRight"):
                     if y not in self.forbiddenFields:
@@ -292,6 +315,7 @@ class GameHolder:
                     if z not in self.forbiddenFields:
                         self.forbiddenFields.append(z)
         else:
+            # After selecting a block for ship option 1 so 1 block we instantly forbid the ship block and surroundings
             self.forbiddenFields.append((self.letterToIndex[baseX], baseY))
             [self.forbiddenFields.append((x[0], x[1])) for x
              in locateSurroundingFields(self.letterToIndex[baseX], baseY, "surround")]
@@ -299,16 +323,19 @@ class GameHolder:
             self.shipMg.setShipAwaitingApproval(self.shipMg.getCurrentShipOption())
 
 
+    # Called after pressing board field with selected ship option
     def markShipFields(self, x, y):
         # print("gh.markShipFields")
+        # Procedural calls of operations to perform to ensure proper ship selection
         if self.shipMg.getCurrentShipOption() is not None:
             self.shipMg.shipFieldSelected(x, y)
             self.customizeButtonForShip(self.letterToIndex[x], y)
             self.moveHistory.append((x, y))
             self.disableBoardFields()
             self.updateNextMoveOptions(x, y)
-            print("forbid: ", sorted(self.forbiddenFields))
 
+    # Disable every field on the board. General approach is that after every move we disable the whole board and then
+    # enable only needed fields. After move completion we enable everything that is not forbidden or the board band
     def disableBoardFields(self):
         # print("gh.disableBoardFields")
         for i in range(11):
@@ -350,6 +377,7 @@ class GameHolder:
         az = ['', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J']
         nums = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '']
         self.leftSide.addLayout(self.boardLayout)
+        # No spaces in between buttons
         self.boardLayout.setSpacing(0)
         for i in range(len(az)):
             self.selectionBoard[i].append(QtWidgets.QPushButton(az[i]))
