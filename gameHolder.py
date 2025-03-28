@@ -322,12 +322,20 @@ class GameHolder:
 
             self.shipMg.setShipAwaitingApproval(self.shipMg.getCurrentShipOption())
 
+    def checkMarkCorrectness(self, x, y):
+        if self.shipMg.getCurrentShipOption() is not None:
+            if self.shipMg.getCurrentShipOption() != 1:
+                pass
+              # Tutaj jakoś edgecase żeby na 3 wolne pola nie pakować 4 polowego statku
+            return True
+        else:
+            return False
 
     # Called after pressing board field with selected ship option
     def markShipFields(self, x, y):
         # print("gh.markShipFields")
         # Procedural calls of operations to perform to ensure proper ship selection
-        if self.shipMg.getCurrentShipOption() is not None:
+        if self.checkMarkCorrectness(x, y):
             self.shipMg.shipFieldSelected(x, y)
             self.customizeButtonForShip(self.letterToIndex[x], y)
             self.moveHistory.append((x, y))
