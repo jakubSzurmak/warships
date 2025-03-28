@@ -49,6 +49,9 @@ class ShipManager:
     def getRemainingShipSelections(self):
         return self.remainingShipSelections
 
+    def getShipStackLen(self):
+        return len(self.shipAppendixStack)
+
     def getCurrentShipOption(self):
         return self.currentShipOption
 

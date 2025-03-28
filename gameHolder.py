@@ -145,6 +145,7 @@ class GameHolder:
                                             }
                                         """)
         self.buttonPanel.addWidget(self.backButton)
+        self.backButton.setEnabled(False)
 
         self.resetButton.setStyleSheet("""
                                             QPushButton { 
@@ -231,6 +232,9 @@ class GameHolder:
 
         # After freeing previously taken fields activate them
         self.enableBoardFields()
+        # Disable back to not back out of empty stack
+        if self.shipMg.getShipStackLen() == 0:
+            self.backButton.setEnabled(False)
 
     # Revert all changes, get back to start state
     def resetSelectionState(self):
@@ -260,6 +264,9 @@ class GameHolder:
             self.enableBoardFields()
             self.shipMg.switchShipOptions(False)
             self.moveHistory = []
+            # Back only available if ships present
+            if self.shipMg.getShipStackLen() > 0:
+                self.backButton.setEnabled(True)
 
     # Calculate the edge fields of the ship
     def calculateYoungestOldest(self):
