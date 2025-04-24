@@ -123,6 +123,7 @@ class ShipManager:
     # Returning fields of lastly selected ship
     def shipSelectionRollback(self):
         rollbackFields = []
+        self.updateShipOptionLabel(self.shipAppendixStack[-1], 1)
         for i in self.shipFields[-self.shipAppendixStack.pop(-1):]:
             self.shipFields.remove(i)
             rollbackFields.append(i)
