@@ -1,4 +1,5 @@
 import shipManager
+import battleManager
 from shipManager import QtWidgets
 
 
@@ -33,6 +34,11 @@ class GameHolder:
         self.shipMg = shipManager.ShipManager()
         self.window = QtWidgets.QMainWindow()
         self.tabs = QtWidgets.QTabWidget()
+
+        self.tabSignalsConnected = False
+
+        
+        self.battleMg = None #Initialized when all the ships are placed and battle starts
 
         # Layout scheme: Main window -> 2 tabs -> (1st tab):
         # Main layout   3 columns and 2 rows
@@ -77,6 +83,8 @@ class GameHolder:
 
         # After selecting ship option each selected field lands here, flushed after confirmation
         self.moveHistory = []
+
+        self.allShipsPlaced = False
 
     def getWindow(self):
         # print("gh.getWindow")
@@ -236,6 +244,9 @@ class GameHolder:
         if self.shipMg.getShipStackLen() == 0:
             self.backButton.setEnabled(False)
 
+        self.updateALlShipsPlacedState()
+
+
     # Revert all changes, get back to start state
     def resetSelectionState(self):
         self.moveHistory = []
@@ -248,6 +259,9 @@ class GameHolder:
                 if j != 0 and i != 0:
                     self.setStockBoardFieldStyle(i, j)
 
+        self.allShipsPlaced = False
+        self.acceptButton.setText("Approve")
+
     # Enables buttons, makes them clickable
     def enableBoardFields(self):
         # print("gh.enableBoardFields")
@@ -258,6 +272,12 @@ class GameHolder:
 
     # After pressing accept check with shipMg if every block for this ship option is selected
     def pullApproval(self):
+
+
+        if self.allShipsPlaced:
+            self.startBattle()
+            return
+
         # print("gh.pullApproval")
         if self.shipMg.getShipAwaitingApproval() == self.shipMg.getCurrentShipOption():
             self.shipMg.shipSelectionConfirmed()
@@ -267,6 +287,28 @@ class GameHolder:
             # Back only available if ships present
             if self.shipMg.getShipStackLen() > 0:
                 self.backButton.setEnabled(True)
+
+            self.updateALlShipsPlacedState()
+
+
+    def updateALlShipsPlacedState(self):
+        all_placed = (
+            self.shipMg.remainingShipFourSelections == 0 and
+            self.shipMg.remainingShipThreeSelections == 0 and
+            self.shipMg.remainingShipTwoSelections == 0 and
+            self.shipMg.remainingShipOneSelections == 0
+        )
+
+        self.allShipsPlaced = all_placed
+
+        if self.allShipsPlaced:
+            self.acceptButton.setText("Start battle")
+
+            self.shipMg.switchShipOptions(True)
+
+
+
+
 
     # Calculate the edge fields of the ship
     def calculateYoungestOldest(self):
@@ -316,10 +358,10 @@ class GameHolder:
                 # memory and time wise
                 youngest, oldest = self.calculateYoungestOldest()
                 for y in locateSurroundingFields(self.letterToIndex[oldest[0]], oldest[1], "leftRight"):
-                    if y not in self.forbiddenFields:
+                   if y not in self.forbiddenFields:
                         self.forbiddenFields.append(y)
                 for z in locateSurroundingFields(self.letterToIndex[youngest[0]], youngest[1], "leftRight"):
-                    if z not in self.forbiddenFields:
+                  if z not in self.forbiddenFields:
                         self.forbiddenFields.append(z)
         else:
             # After selecting a block for ship option 1 so 1 block we instantly forbid the ship block and surroundings
@@ -412,10 +454,51 @@ class GameHolder:
                 self.selectionBoard[i][j].setFixedSize(60, 55)
                 self.boardLayout.addWidget(self.selectionBoard[i][j], i, j)
 
+
+    def onTabChanged(self,index):
+        if index == 0:
+            self.showSetupUI()
+        elif index ==1 :
+            self.hideSetupUI()
+
+
+    def showSetupUI(self):
+        for i in range(11):
+            for j in range(11):
+                self.selectionBoard[i][j].show()
+
+        self.acceptButton.show()
+        self.backButton.show()
+        self.resetButton.show()
+        self.quitButton.show()
+        self.myOnlineStatus.show()
+        self.enemyOnlineStatus.show()
+
+        for button in self.shipMg.getShipOptionButtons():
+            button.show()
+
+    def hideSetupUI(self):
+        for i in range(11):
+            for j in range(11):
+                self.selectionBoard[i][j].hide()
+
+        self.acceptButton.hide()
+        self.backButton.hide()
+        self.resetButton.hide()
+        self.quitButton.hide()
+        self.myOnlineStatus.hide()
+        self.enemyOnlineStatus.hide()
+
+        for button in self.shipMg.getShipOptionButtons():
+            button.hide()
+
+
     def startState(self):
         # print("gh.startState")
         self.tabs.setLayout(self.layout)
         self.window.setCentralWidget(self.tabs)
+
+        self.window.setFixedSize(1500,690)
 
         self.tabs.addTab(self.tab1, "Prepare for Battle")
         self.tabs.addTab(self.tab2, "Battle")
@@ -425,3 +508,22 @@ class GameHolder:
         self.initLeftSide()
         self.initRightSide()
         self.initButtonPanel()
+
+
+    def startBattle(self):
+
+        if self.battleMg == None:
+            self.battleMg = battleManager.BattleManager(self)
+
+
+        if not self.tabSignalsConnected:
+            self.tabs.currentChanged.connect(self.onTabChanged)
+            self.tabSignalsConnected = True
+
+        self.tabs.setTabEnabled(1,True)
+
+        self.tabs.setCurrentIndex(1)
+
+        self.battleMg.init_game()
+
+

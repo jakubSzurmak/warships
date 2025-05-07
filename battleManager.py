@@ -1,18 +1,38 @@
 from PySide6 import QtWidgets, QtCore
 import gameState
 
+
 class BattleManager:
 
     def __init__(self, game_holder):
         self.game_holder = game_holder
         self.game_state = gameState.GameState()
 
-        self.setup_battle_ui()
-
-        self.waiting_for_opponent = False
-
+        # Initialize UI components first
         self.status_label = QtWidgets.QLabel("Waiting for battle to begin...")
         self.turn_label = QtWidgets.QLabel("Your turn")
+        self.own_ships_remaining = QtWidgets.QLabel("Your ships: 10/10")
+        self.enemy_ships_remaining = QtWidgets.QLabel("Enemy ships: 10/10")
+        self.network_status = QtWidgets.QLabel("Connected")
+        self.shot_history = QtWidgets.QTextEdit()
+        self.shot_history.setReadOnly(True)
+
+        # Add exit button in battle screen
+        self.exit_button = QtWidgets.QPushButton("Exit")
+        self.exit_button.setFixedWidth(100)  # Make button smaller
+        self.exit_button.clicked.connect(quit)
+        self.exit_button.setStyleSheet("""
+            QPushButton { 
+                background-color:lightgrey;
+                border: 2px solid black;
+                font-size: 16px;
+                padding: 0px;
+            }
+            QPushButton:hover {
+                background-color: black;
+                color: white;
+            }
+        """)
 
         # Dict for tracking enemy board buttons
         self.enemy_board = {
@@ -24,39 +44,51 @@ class BattleManager:
             0: [], 1: [], 2: [], 3: [], 4: [], 5: [], 6: [], 7: [], 8: [], 9: [], 10: []
         }
 
-        self.own_ships_remaining = QtWidgets.QLabel("Your ships: 10/10")
-        self.enemy_ships_remaining = QtWidgets.QLabel("Enemy ships: 10/10")
+        self.setup_battle_ui()
 
-        self.network_status = QtWidgets.QLabel("Connected")
-
-        self.shot_history = QtWidgets.QTextEdit()
-        self.shot_history.setReadOnly(True)
-
+        self.waiting_for_opponent = False
 
     def setup_battle_ui(self):
-
         battle_tab = self.game_holder.tab2
 
+        # Create a main container layout with zero spacing
         battle_layout = QtWidgets.QGridLayout(battle_tab)
 
+        # FIXED: Set content margins to zero
+        battle_layout.setContentsMargins(0, 0, 0, 0)
+        battle_layout.setSpacing(0)
+
+        # Create board layouts with zero spacing
         self.enemy_board_layout = QtWidgets.QGridLayout()
+        # FIXED: Set content margins to zero
+        self.enemy_board_layout.setContentsMargins(0, 0, 0, 0)
+        self.enemy_board_layout.setSpacing(0)
+
         self.own_board_layout = QtWidgets.QGridLayout()
+        # FIXED: Set content margins to zero
+        self.own_board_layout.setContentsMargins(0, 0, 0, 0)
+        self.own_board_layout.setSpacing(0)
 
         self.status_layout = QtWidgets.QVBoxLayout()
+        self.status_layout.setSpacing(6)
+
+        # Create a bottom layout for the exit button
+        self.bottom_layout = QtWidgets.QHBoxLayout()
+        self.bottom_layout.addStretch()
+        self.bottom_layout.addWidget(self.exit_button)
+        self.bottom_layout.addStretch()
 
         # Add the layouts to the main battle layout
         battle_layout.addLayout(self.enemy_board_layout, 0, 0)
         battle_layout.addLayout(self.status_layout, 0, 1)
         battle_layout.addLayout(self.own_board_layout, 0, 2)
+        battle_layout.addLayout(self.bottom_layout, 1, 0, 1, 3)  # Bottom row spans all columns
 
         self.setup_status_panel()
-
         self.setup_enemy_board()
-
         self.setup_own_board_display()
 
     def setup_status_panel(self):
-
         # Add the status label to the status layout
         self.status_layout.addWidget(self.status_label)
         self.status_layout.addWidget(self.turn_label)
@@ -78,12 +110,9 @@ class BattleManager:
         self.status_layout.addStretch()
 
     def setup_enemy_board(self):
-
         # Add column labels (A-J)
         az = ['', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J']
         nums = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '']
-
-        self.enemy_board_layout.setSpacing(0)
 
         # Create the board buttons
         for i in range(len(az)):
@@ -104,16 +133,14 @@ class BattleManager:
                         )
 
                 self.enemy_board[i][j].setFixedSize(60, 55)
-                self.enemy_board_layout.addWidget(self.enemy_board[i][j], i, j)
+                self.enemy_board[i][j].setContentsMargins(0, 0, 0, 0)
+                # FIXED: Set content margins to zero on the widget
+                self.enemy_board_layout.addWidget(self.enemy_board[i][j], i, j, 1, 1)  # Add row, column span parameters
 
     def setup_own_board_display(self):
-
         # Add column labels (A-J)
         az = ['', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J']
         nums = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '']
-
-
-        self.own_board_layout.setSpacing(0)
 
         # Create the board display
         for i in range(len(az)):
@@ -130,8 +157,11 @@ class BattleManager:
                         self.set_own_board_field_style(self.own_board_display[i][j])
 
                 self.own_board_display[i][j].setFixedSize(60, 55)
+                self.own_board_display[i][j].setContentsMargins(0, 0, 0, 0)
                 self.own_board_display[i][j].setAlignment(QtCore.Qt.AlignCenter)
-                self.own_board_layout.addWidget(self.own_board_display[i][j], i, j)
+                # FIXED: Set content margins to zero on the widget
+                self.own_board_layout.addWidget(self.own_board_display[i][j], i, j, 1,
+                                                1)  # Add row, column span parameters
 
     def set_board_band_style(self, button):
         button.setEnabled(False)
@@ -208,7 +238,6 @@ class BattleManager:
         """)
 
     def init_game(self):
-
         # Import ships from the ship manager
         self.game_state.import_ships_from_shipmanager(self.game_holder.shipMg)
 
@@ -229,7 +258,6 @@ class BattleManager:
         self.shot_history.append("Game started. Your turn to fire!")
 
     def fire_shot(self, letter, number):
-
         # Check if it's our turn
         if self.waiting_for_opponent:
             self.status_label.setText("Please wait for opponent's move")
@@ -278,15 +306,12 @@ class BattleManager:
         QtCore.QTimer.singleShot(2000, self.simulate_opponent_move)
 
     def simulate_opponent_move(self):
-
         # Replace by receiving a move from the server when it is implemented
-
         import random
 
         # Get our player role
         our_role = self.game_state.player_role
         opponent_role = 2 if our_role == 1 else 1
-
 
         while True:
             x = random.randint(1, 10)
@@ -301,7 +326,6 @@ class BattleManager:
         # Convert the coordinates for display
         letter = self.game_state.index_to_letter(x)
 
-
         if result == self.game_state.MISS:
             self.set_miss_style(self.own_board_display[x][y])
             self.shot_history.append(f"Enemy fired at {letter}{y}: Miss")
@@ -314,21 +338,17 @@ class BattleManager:
             self.set_hit_style(self.own_board_display[x][y])
             self.shot_history.append(f"Enemy fired at {letter}{y}: Ship sunk!")
 
-
             if self.game_state.is_game_over():
                 self.game_over(self.game_state.get_winner())
                 return
 
-
         self.update_battle_ui()
-
 
         self.waiting_for_opponent = False
         self.status_label.setText("Your turn to fire!")
         self.turn_label.setText("Your turn")
 
     def update_battle_ui(self):
-
         # Get the board view for our player
         board_view = self.game_state.get_board_for_player(self.game_state.player_role)
 
@@ -354,7 +374,6 @@ class BattleManager:
         self.enemy_ships_remaining.setText(f"Enemy ships: {enemy_intact}/10")
 
     def game_over(self, winner):
-
         # Display game over message
         if winner == self.game_state.player_role:
             self.status_label.setText("Game over! You win!")
