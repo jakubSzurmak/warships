@@ -54,23 +54,14 @@ class BattleManager:
         # Create a main container layout with zero spacing
         battle_layout = QtWidgets.QGridLayout(battle_tab)
 
-        # FIXED: Set content margins to zero
-        battle_layout.setContentsMargins(0, 0, 0, 0)
-        battle_layout.setSpacing(0)
-
         # Create board layouts with zero spacing
         self.enemy_board_layout = QtWidgets.QGridLayout()
-        # FIXED: Set content margins to zero
-        self.enemy_board_layout.setContentsMargins(0, 0, 0, 0)
         self.enemy_board_layout.setSpacing(0)
 
         self.own_board_layout = QtWidgets.QGridLayout()
-        # FIXED: Set content margins to zero
-        self.own_board_layout.setContentsMargins(0, 0, 0, 0)
         self.own_board_layout.setSpacing(0)
 
         self.status_layout = QtWidgets.QVBoxLayout()
-        self.status_layout.setSpacing(6)
 
         # Create a bottom layout for the exit button
         self.bottom_layout = QtWidgets.QHBoxLayout()
@@ -106,9 +97,6 @@ class BattleManager:
         self.status_layout.addWidget(QtWidgets.QLabel("Shot History:"))
         self.status_layout.addWidget(self.shot_history)
 
-        # Add spacer to push everything to the top
-        self.status_layout.addStretch()
-
     def setup_enemy_board(self):
         # Add column labels (A-J)
         az = ['', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J']
@@ -133,7 +121,6 @@ class BattleManager:
                         )
 
                 self.enemy_board[i][j].setFixedSize(60, 55)
-                self.enemy_board[i][j].setContentsMargins(0, 0, 0, 0)
                 # FIXED: Set content margins to zero on the widget
                 self.enemy_board_layout.addWidget(self.enemy_board[i][j], i, j, 1, 1)  # Add row, column span parameters
 
@@ -157,11 +144,8 @@ class BattleManager:
                         self.set_own_board_field_style(self.own_board_display[i][j])
 
                 self.own_board_display[i][j].setFixedSize(60, 55)
-                self.own_board_display[i][j].setContentsMargins(0, 0, 0, 0)
-                self.own_board_display[i][j].setAlignment(QtCore.Qt.AlignCenter)
                 # FIXED: Set content margins to zero on the widget
-                self.own_board_layout.addWidget(self.own_board_display[i][j], i, j, 1,
-                                                1)  # Add row, column span parameters
+                self.own_board_layout.addWidget(self.own_board_display[i][j], i, j, 1, 1)  # Add row, column span parameters
 
     def set_board_band_style(self, button):
         button.setEnabled(False)

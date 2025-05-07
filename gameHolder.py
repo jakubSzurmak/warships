@@ -521,6 +521,7 @@ class GameHolder:
             self.tabSignalsConnected = True
 
         self.tabs.setTabEnabled(1,True)
+        self.tabs.setTabEnabled(0,False)
 
         self.tabs.setCurrentIndex(1)
 
