@@ -1,12 +1,15 @@
-from PySide6 import QtWidgets, QtCore
+import math
 import gameState
-
+import socket
+import threading
+from PySide6 import QtWidgets
 
 class BattleManager:
 
     def __init__(self, game_holder):
         self.game_holder = game_holder
-        self.game_state = gameState.GameState()
+        self.game_state = gameState.GameState(game_holder.getClientId())
+        self.localNetworkMsgCounter = 0
 
         # Initialize UI components first
         self.status_label = QtWidgets.QLabel("Waiting for battle to begin...")
@@ -44,9 +47,50 @@ class BattleManager:
             0: [], 1: [], 2: [], 3: [], 4: [], 5: [], 6: [], 7: [], 8: [], 9: [], 10: []
         }
 
-        self.setup_battle_ui()
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        if self.game_holder.getClientId() == "client1":
+            self.sock.bind(('127.0.0.1', 5000))
+            self.target = ('127.0.0.1', 5001)
+        else:
+            self.sock.bind(('127.0.0.1', 5001))
+            self.target = ('127.0.0.1', 5000)
 
-        self.waiting_for_opponent = False
+        self.enemyShotX = None
+        self.enemyShotY = None
+        self.flag = 0
+
+        self.setup_battle_ui()
+        self.start_listener_udp(self.receive_shot)
+
+        if game_holder.getClientId() == "client1": self.waiting_for_opponent = False
+        else: self.waiting_for_opponent = True
+
+    def start_listener_udp(self, update_call):
+        def listen():
+
+            while True:
+                data, addr = self.sock.recvfrom(1024)
+                self.enemyShotX, self.enemyShotY = data.decode().split(",")
+                self.enemyShotX, self.enemyShotY = int(self.enemyShotX), int(self.enemyShotY)
+                update_call()
+                if data.decode() is not None:
+                    temp = math.floor(self.flag)
+                    print(data.decode(), self.flag, 'odbierano \n')
+                    if temp < self.flag:
+                        self.flag += 0.5
+                        #self.enemyShotX = int(data.decode())
+                    else:
+                        self.flag += 0.5
+                        #self.enemyShotY = int(data.decode())
+                    #update_call()  # Call GUI update function
+
+        threading.Thread(target=listen, daemon=True).start()
+
+    def send_message_udp(self, msg):
+        if self.game_holder.getClientId() == "client1":
+            self.sock.sendto(msg, self.target)
+        else:
+            self.sock.sendto(msg, self.target)
 
     def setup_battle_ui(self):
         battle_tab = self.game_holder.tab2
@@ -239,7 +283,10 @@ class BattleManager:
         self.game_holder.tabs.setCurrentIndex(1)
 
         # Update the shot history
-        self.shot_history.append("Game started. Your turn to fire!")
+        if self.game_holder.getClientId() == "client1":
+            self.shot_history.append("Game started. Your turn to fire!")
+        else:
+            self.shot_history.setText("Please wait for opponent's move")
 
     def fire_shot(self, letter, number):
         # Check if it's our turn
@@ -247,11 +294,19 @@ class BattleManager:
             self.status_label.setText("Please wait for opponent's move")
             return
 
+
         # Convert the coordinates
         x = self.game_state.letter_to_index(letter)
         y = number
+        print("sel:", x, y)
+        msg = f"{x},{y}"
+        self.send_message_udp(msg.encode())
+        #self.send_message_udp(str(x).encode('ascii'))
+        #self.send_message_udp(str(y).encode('ascii'))
 
         # Process the shot
+        # gamholder.network send data about shot
+        self.localNetworkMsgCounter += 1
         result, ship_id = self.game_state.process_shot(self.game_state.player_role, x, y)
 
         # Update the UI based on the result
@@ -273,7 +328,6 @@ class BattleManager:
             if self.game_state.is_game_over():
                 self.game_over(self.game_state.get_winner())
                 return
-
         elif result == self.game_state.INVALID:
             self.status_label.setText("Invalid shot. Try again.")
             return
@@ -285,27 +339,23 @@ class BattleManager:
         self.status_label.setText("Waiting for opponent's move...")
         self.turn_label.setText("Enemy's turn")
 
+        # gameHolder.network. if signal detected proceed
+
         # Implement sending the shot to server here <---
         # Simulation for testing remove when server is implemented
-        QtCore.QTimer.singleShot(2000, self.simulate_opponent_move)
 
-    def simulate_opponent_move(self):
+
+
+    def receive_shot(self):
         # Replace by receiving a move from the server when it is implemented
-        import random
 
-        # Get our player role
+        self.waiting_for_opponent = False
+        x, y = self.enemyShotX, self.enemyShotY
         our_role = self.game_state.player_role
         opponent_role = 2 if our_role == 1 else 1
 
-        while True:
-            x = random.randint(1, 10)
-            y = random.randint(1, 10)
-
-            # Process the shot
-            result, ship_id = self.game_state.process_shot(opponent_role, x, y)
-
-            if result != self.game_state.INVALID:
-                break
+        # Process the shot
+        result, ship_id = self.game_state.process_shot(opponent_role, x, y)
 
         # Convert the coordinates for display
         letter = self.game_state.index_to_letter(x)
@@ -328,6 +378,7 @@ class BattleManager:
 
         self.update_battle_ui()
 
+        # Switch turns back to us
         self.waiting_for_opponent = False
         self.status_label.setText("Your turn to fire!")
         self.turn_label.setText("Your turn")

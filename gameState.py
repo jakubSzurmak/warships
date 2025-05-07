@@ -1,5 +1,5 @@
 class GameState:
-    def __init__(self):
+    def __init__(self, playerId):
 
         self.MISS = "MISS"
         self.HIT = "HIT"
@@ -20,7 +20,8 @@ class GameState:
         self.player1_shots = []
         self.player2_shots = []
 
-        self.player_role = 1  # 1 = host/player1, 2 = client/player2
+        if playerId == "client1": self.player_role = 1
+        else: self.player_role = 2
 
     def add_ship(self, player, ship_id, ship_size, ship_fields):
         ships = self.player1_ships if player == 1 else self.player2_ships
@@ -84,6 +85,9 @@ class GameState:
     def start_game(self):
         self.game_active = True
         self.turn = 1
+
+    def get_turn(self):
+        return self.turn
 
     def get_board_for_player(self, player, include_ships=True):
 
