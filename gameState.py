@@ -148,7 +148,7 @@ class GameState:
                 y = number
                 ship_fields.append((x, y))
 
-            self.add_ship(player, f"ship_{ship_id}", ship_fields)
+            self.add_ship(player, f"ship_{ship_id}", size, ship_fields)
             ship_id += 1
 
         return True

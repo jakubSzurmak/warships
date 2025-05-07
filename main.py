@@ -10,7 +10,6 @@ if __name__ == '__main__':
 
 
     # Setting starting size of GUI window and displaying it
-    myGame.getWindow().resize(1280, 920)
     myGame.getWindow().show()
 
     # Pushing game initialization from here action and checks start
