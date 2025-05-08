@@ -29,8 +29,11 @@ def locateSurroundingFields(baseX, baseY, mode):
 
 class GameHolder:
 
-    def __init__(self):
+    def __init__(self, clientId):
         self.app = QtWidgets.QApplication([])
+        self.networkMg = None
+        self.clientId = clientId
+
         self.shipMg = shipManager.ShipManager()
         self.window = QtWidgets.QMainWindow()
         self.tabs = QtWidgets.QTabWidget()
@@ -89,6 +92,12 @@ class GameHolder:
     def getWindow(self):
         # print("gh.getWindow")
         return self.window
+
+    def getNetworkMg(self):
+        return self.networkMg
+
+    def getClientId(self):
+        return self.clientId
 
     def getTabs(self):
         # print("gh.getTabs")
@@ -511,7 +520,6 @@ class GameHolder:
 
 
     def startBattle(self):
-
         if self.battleMg == None:
             self.battleMg = battleManager.BattleManager(self)
 
@@ -526,5 +534,3 @@ class GameHolder:
         self.tabs.setCurrentIndex(1)
 
         self.battleMg.init_game()
-
-
