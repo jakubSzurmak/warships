@@ -20,8 +20,10 @@ class GameState:
         self.player1_shots = []
         self.player2_shots = []
 
-        if playerId == "client1": self.player_role = 1
-        else: self.player_role = 2
+        if playerId == "client1":
+            self.player_role = 1
+        else:
+            self.player_role = 2
 
     def add_ship(self, player, ship_id, ship_size, ship_fields):
         ships = self.player1_ships if player == 1 else self.player2_ships
@@ -30,7 +32,8 @@ class GameState:
         ships[ship_id] = {
             "size": ship_size,
             "fields": ship_fields,
-            "hits": []
+            "hits": [],
+            "sunk" : False
         }
 
         for x, y in ship_fields:
@@ -40,8 +43,6 @@ class GameState:
         target_board = self.player2_board if player == 1 else self.player1_board
         target_ships = self.player2_ships if player == 1 else self.player1_ships
 
-        if player != self.turn:
-            return self.INVALID, None
 
         if not (1 <= x <= 10 and 1 <= y <= 10):
             return self.INVALID, None
@@ -64,7 +65,8 @@ class GameState:
                     ship["hits"].append((x, y))
 
                     if len(ship["hits"]) == ship["size"]:
-                        all_sunk = all(len(s["hits"]) == s["size"] for s in target_ships.values())
+                        ship["sunk"] = True
+                        all_sunk = all(s["sunk"] for s in target_ships.values())
                         if all_sunk:
                             self.game_active = False
                             self.winner = player
@@ -85,6 +87,25 @@ class GameState:
     def start_game(self):
         self.game_active = True
         self.turn = 1
+
+        self.initialize_enemy_ships()
+
+    def initialize_enemy_ships(self):
+        enemy_role = 2 if self.player_role == 1 else 1
+        enemy_ships = self.player1_ships if enemy_role == 1 else self.player2_ships
+
+        if not enemy_ships:
+            ship_id = 0
+            ship_sizes = [4,3,3,2,2,2,1,1,1,1]
+
+            for size in ship_sizes:
+                enemy_ships[f"enemy_ship_{ship_id}"] = {
+                    "size" : size,
+                    "fields" : [],
+                    "hits" : [],
+                    "sunk" : False
+                }
+                ship_id += 1
 
     def get_turn(self):
         return self.turn
@@ -119,7 +140,7 @@ class GameState:
             result[ship_id] = {
                 'size': ship['size'],
                 'hits': len(ship['hits']),
-                'sunk': len(ship['hits']) == ship['size']
+                'sunk': ship.get('sunk', len(ship['hits']) == ship['size'])
             }
 
         return result
@@ -160,4 +181,14 @@ class GameState:
 
     def set_player_role(self,role):
         self.player_role = role
+
+    def update_enemy_ship_sunk(self, ship_size):
+        enemy_role = 2 if self.player_role == 1 else 1
+        enemy_ships = self.player1_ships if enemy_role == 1 else self.player2_ships
+
+        for ship_id, ship in enemy_ships.items():
+            if ship['size'] == ship_size and not ship['sunk']:
+                ship['sunk'] = True
+                ship['hits'] = [None] * ship_size
+                break
 
