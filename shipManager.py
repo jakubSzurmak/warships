@@ -23,9 +23,9 @@ class ShipManager:
 
         self.shipAwaitingApproval = 0
 
-        self.remainingShipOneSelections = 4
-        self.remainingShipTwoSelections = 3
-        self.remainingShipThreeSelections = 2
+        self.remainingShipOneSelections = 0
+        self.remainingShipTwoSelections = 0
+        self.remainingShipThreeSelections = 1
         self.remainingShipFourSelections = 1
 
         self.guiShipSelector = QtWidgets.QButtonGroup()
