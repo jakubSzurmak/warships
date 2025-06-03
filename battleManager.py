@@ -1,4 +1,3 @@
-import math
 import gameState
 import socket
 import threading
@@ -448,10 +447,12 @@ class BattleManager(QObject):
             elif result == "SUNK":
                 self.set_hit_style(self.enemy_board[x][y])
                 self.shot_history.append(f"You fired at {letter}{number}: Ship sunk!")
+                self.game_state.update_enemy_ship_sunk(True)
 
             elif result.startswith("WIN"):
                 self.set_hit_style(self.enemy_board[x][y])
                 self.shot_history.append(f"You fired at {letter}{number}: Ship sunk!")
+                self.game_state.update_enemy_ship_sunk(True)
                 self.game_over(self.game_state.player_role)
                 return
 
@@ -514,6 +515,8 @@ class BattleManager(QObject):
                 elif result == self.game_state.SUNK:
                     self.set_hit_style(self.own_board_display[x][y])
                     self.shot_history.append(f"Enemy fired at {letter}{y}: Ship sunk!")
+                    self.game_state.update_enemy_ship_sunk(False)
+
 
                     if self.game_state.is_game_over():
                         self.send_message_udp("RESULT:WIN")
@@ -557,8 +560,10 @@ class BattleManager(QObject):
         enemy_role = 2 if self.game_state.player_role == 1 else 1
         enemy_ships = self.game_state.get_remaining_ships(enemy_role)
 
-        own_intact = sum(1 for ship in own_ships.values() if not ship['sunk'])
-        enemy_intact = sum(1 for ship in enemy_ships.values() if not ship['sunk'])
+        own_intact = len(own_ships.values())
+        enemy_intact = len(enemy_ships.values())
+
+        print(own_ships, enemy_ships)
 
         self.own_ships_remaining.setText(f"Your ships: {own_intact}/10")
         self.enemy_ships_remaining.setText(f"Enemy ships: {enemy_intact}/10")

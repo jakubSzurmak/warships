@@ -39,6 +39,8 @@ class GameState:
         for x, y in ship_fields:
             board[x][y] = 1
 
+
+
     def process_shot(self, player, x, y):
         target_board = self.player2_board if player == 1 else self.player1_board
         target_ships = self.player2_ships if player == 1 else self.player1_ships
@@ -182,13 +184,14 @@ class GameState:
     def set_player_role(self,role):
         self.player_role = role
 
-    def update_enemy_ship_sunk(self, ship_size):
-        enemy_role = 2 if self.player_role == 1 else 1
-        enemy_ships = self.player1_ships if enemy_role == 1 else self.player2_ships
+    def update_enemy_ship_sunk(self, enemy):
 
-        for ship_id, ship in enemy_ships.items():
-            if ship['size'] == ship_size and not ship['sunk']:
-                ship['sunk'] = True
-                ship['hits'] = [None] * ship_size
-                break
+        if enemy == True:
+            enemy_role = 2 if self.player_role == 1 else 1
 
+            #Inverse the roles to adjust enemy board status
+            enemy_ships = self.player1_ships if enemy_role == 1 else self.player2_ships
+            enemy_ships.popitem()
+        elif enemy == False:
+            ships = self.player1_ships if self.player_role == 1 else self.player2_ships
+            ships.popitem()
