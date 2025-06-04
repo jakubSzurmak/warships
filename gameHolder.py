@@ -56,7 +56,6 @@ class GameHolder:
         self.buttonPanel = QtWidgets.QHBoxLayout()
 
         self.acceptButton = QtWidgets.QPushButton("Approve")
-        self.backButton = QtWidgets.QPushButton("Back")
         self.resetButton = QtWidgets.QPushButton("Reset")
         self.quitButton = QtWidgets.QPushButton("Exit")
 
@@ -117,7 +116,7 @@ class GameHolder:
         # After connect don't do connect(f()) but connect(f) as f() calls immediately on init
         if self.tabs.isTabEnabled(0):
             self.acceptButton.clicked.connect(self.pullApproval)
-            self.backButton.clicked.connect(self.revertSingleSelection)
+
             self.resetButton.clicked.connect(self.resetSelectionState)
             self.quitButton.clicked.connect(quit)
         else:
@@ -140,20 +139,6 @@ class GameHolder:
                                         """)
         self.buttonPanel.addWidget(self.acceptButton)
 
-        self.backButton.setStyleSheet("""
-                                            QPushButton { 
-                                                background-color:lightgrey;
-                                                border: 2px solid black;
-                                                font-size: 16px;
-                                                padding: 0px;
-                                            }
-                                            QPushButton:hover {
-                                                background-color: yellow;
-                                                color: black;
-                                            }
-                                        """)
-        self.buttonPanel.addWidget(self.backButton)
-        self.backButton.setEnabled(False)
 
         self.resetButton.setStyleSheet("""
                                             QPushButton { 
@@ -203,47 +188,7 @@ class GameHolder:
                                                 """)
 
     # After clicking Back button removes lastly approved ship
-    def revertSingleSelection(self):
-        self.forbiddenFields = sorted(self.forbiddenFields)
-        lastFields = self.shipMg.shipSelectionRollback()
 
-        # If last ship was 1 block remove everything arround
-        if len(lastFields) == 1:
-            mode = "surround"
-        else:
-            # To not duplicate removals we cannot remove all surroundings for all blocks, first and last block manually
-            # others automatically but only diagonals
-            mode = "diagonals"
-            youngest, oldest = sorted(lastFields)[0], sorted(lastFields)[-1]
-            if youngest[0] == oldest[0]:
-                if (self.letterToIndex[youngest[0]], youngest[1] - 1) in self.forbiddenFields:
-                    self.forbiddenFields.remove((self.letterToIndex[youngest[0]], youngest[1] - 1))
-
-                if (self.letterToIndex[oldest[0]], oldest[1] + 1) in self.forbiddenFields:
-                    self.forbiddenFields.remove((self.letterToIndex[oldest[0]], oldest[1] + 1))
-
-            if youngest[1] == oldest[1]:
-                temp = self.letterToIndex[youngest[0]]
-                if (temp - 1, youngest[1]) in self.forbiddenFields:
-                    self.forbiddenFields.remove((temp - 1, youngest[1]))
-
-                if (self.letterToIndex[oldest[0]] + 1, oldest[1]) in self.forbiddenFields:
-                    self.forbiddenFields.remove((self.letterToIndex[oldest[0]] + 1, oldest[1]))
-
-        for i in lastFields:
-            self.forbiddenFields.remove((self.letterToIndex[i[0]], i[1]))
-            self.setStockBoardFieldStyle(self.letterToIndex[i[0]], i[1])
-            for j in locateSurroundingFields(self.letterToIndex[i[0]], i[1], mode):
-                if j in self.forbiddenFields:
-                    self.forbiddenFields.remove((j[0], j[1]))
-
-        # After freeing previously taken fields activate them
-        self.enableBoardFields()
-        # Disable back to not back out of empty stack
-        if self.shipMg.getShipStackLen() == 0:
-            self.backButton.setEnabled(False)
-
-        self.updateALlShipsPlacedState()
 
     # Revert all changes, get back to start state
     def resetSelectionState(self):
@@ -280,8 +225,6 @@ class GameHolder:
             self.shipMg.switchShipOptions(False)
             self.moveHistory = []
             # Back only available if ships present
-            if self.shipMg.getShipStackLen() > 0:
-                self.backButton.setEnabled(True)
 
             self.updateALlShipsPlacedState()
 
@@ -451,11 +394,9 @@ class GameHolder:
                 self.selectionBoard[i][j].show()
 
         self.acceptButton.show()
-        self.backButton.show()
         self.resetButton.show()
         self.quitButton.show()
-        self.myOnlineStatus.show()
-        self.enemyOnlineStatus.show()
+
 
         for button in self.shipMg.getShipOptionButtons():
             button.show()
@@ -466,7 +407,6 @@ class GameHolder:
                 self.selectionBoard[i][j].hide()
 
         self.acceptButton.hide()
-        self.backButton.hide()
         self.resetButton.hide()
         self.quitButton.hide()
 
