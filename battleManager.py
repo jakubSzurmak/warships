@@ -17,10 +17,8 @@ class BattleManager(QObject):
 
         # Initialize UI components first
         self.status_label = QtWidgets.QLabel("Waiting for battle to begin...")
-        self.turn_label = QtWidgets.QLabel("Your turn")
         self.own_ships_remaining = QtWidgets.QLabel("Your ships: 10/10")
         self.enemy_ships_remaining = QtWidgets.QLabel("Enemy ships: 10/10")
-        self.network_status = QtWidgets.QLabel("Connected")
         self.shot_history = QtWidgets.QTextEdit()
         self.shot_history.setReadOnly(True)
 
@@ -168,16 +166,10 @@ class BattleManager(QObject):
     def setup_status_panel(self):
         # Add the status label to the status layout
         self.status_layout.addWidget(self.status_label)
-        self.status_layout.addWidget(self.turn_label)
 
         # Add ship status
-        self.status_layout.addWidget(QtWidgets.QLabel("Ship Status:"))
         self.status_layout.addWidget(self.own_ships_remaining)
         self.status_layout.addWidget(self.enemy_ships_remaining)
-
-        # Add network status
-        self.status_layout.addWidget(QtWidgets.QLabel("Network:"))
-        self.status_layout.addWidget(self.network_status)
 
         # Add shot history
         self.status_layout.addWidget(QtWidgets.QLabel("Shot History:"))
@@ -349,7 +341,8 @@ class BattleManager(QObject):
         self.update_battle_ui()
 
         # Set status message
-        self.status_label.setText("Waiting for opponent to be ready...")
+        if not self.opponent_ready:
+            self.status_label.setText("Waiting for opponent to be ready...")
 
         # Enable the battle tab
         self.game_holder.tabs.setTabEnabled(1, True)
@@ -377,7 +370,7 @@ class BattleManager(QObject):
                 self.shot_history.append("Game started. Your turn to fire!")
                 self.waiting_for_opponent = False
             else:
-                self.status_label.setText("Battle started! Waiting for opponent's move...")
+                self.status_label.setText("Battle started, enemy turn to fire!")
                 self.shot_history.append("Game started. Please wait for opponent's move")
                 self.waiting_for_opponent = True
 
@@ -385,7 +378,7 @@ class BattleManager(QObject):
         try:
             # check if the battle has started
             if not self.battle_started:
-                self.status_label.setText("Waiting for opponent to be ready...")
+                self.status_label.setText("Waiting for opponent to be ready... ")
                 return
 
             # Check if it's our turn
@@ -418,7 +411,6 @@ class BattleManager(QObject):
 
             self.waiting_for_opponent = True
             self.status_label.setText("Waiting for opponent's response...")
-            self.turn_label.setText("Enemy's turn")
         except Exception as e:
             print(f"Error in fire_shot: {e}")
             self.waiting_for_opponent = False
@@ -465,12 +457,10 @@ class BattleManager(QObject):
             if result in ["HIT", "SUNK"]:
                 self.waiting_for_opponent = False
                 self.status_label.setText("Hit! Your turn again!")
-                self.turn_label.setText("Your turn")
             else:
                 # Opponent's turn if Miss
                 self.waiting_for_opponent = True
                 self.status_label.setText("Waiting for opponent's move...")
-                self.turn_label.setText("Enemy's turn")
 
 
     def safe_update_battle_ui(self):
@@ -532,11 +522,9 @@ class BattleManager(QObject):
                 if result in [self.game_state.HIT, self.game_state.SUNK]:
                     self.waiting_for_opponent = True
                     self.status_label.setText("Enemy hit! Waiting for their next move...")
-                    self.turn_label.setText("Enemy's turn")
                 else:
                     self.waiting_for_opponent = False
                     self.status_label.setText("Enemy missed! Your turn to fire!")
-                    self.turn_label.setText("Your turn")
             except Exception as e:
                 print(f"Error in receive_shot: {e}")
                 self.send_message_udp("RESULT:ERROR")

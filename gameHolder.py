@@ -69,8 +69,6 @@ class GameHolder:
         self.tab1 = QtWidgets.QWidget()
         self.tab2 = QtWidgets.QWidget()
 
-        self.myOnlineStatus = QtWidgets.QLabel("You are online")
-        self.enemyOnlineStatus = QtWidgets.QLabel("Enemy is Online")
 
         # Dict for holding buttons on the board, access via matrix(row, column) not x,y
         self.selectionBoard = {
@@ -110,8 +108,6 @@ class GameHolder:
     def initRightSide(self):
         # print("gh.initRight")
         self.layout.addLayout(self.rightSide, 0, 2)
-        self.rightSide.addWidget(self.myOnlineStatus)
-        self.rightSide.addWidget(self.enemyOnlineStatus)
         [self.rightSide.addWidget(x) for x in self.shipMg.getShipOptionButtons()]
 
     def initLeftSide(self):
@@ -495,8 +491,6 @@ class GameHolder:
         self.backButton.hide()
         self.resetButton.hide()
         self.quitButton.hide()
-        self.myOnlineStatus.hide()
-        self.enemyOnlineStatus.hide()
 
         for button in self.shipMg.getShipOptionButtons():
             button.hide()
