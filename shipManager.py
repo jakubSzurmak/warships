@@ -1,17 +1,5 @@
 from PySide6 import QtWidgets
 
-
-# jezeli uzgadniamy że informujemy o tym ile przeciwnikowi zostało poszczególnych statkow to potrzebne
-# jako kontener na pola jak nie to do usunięcia
-class Ship:
-    def __init__(self, size, fields):
-        self.size = size
-        self.fields = fields
-
-    def __del__(self):
-        pass
-
-
 class ShipManager:
 
     def __init__(self):
