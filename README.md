@@ -11,6 +11,8 @@ The source code is divided into five main files:
 
 ### `main.py`
 This is the entry point of the application. It initializes the PyQt window and starts the game interface.
+Starting configuration requires to specify the name of the client as the argv[1] so the running sript would be main.py client1 and main.py client2 accordingly.
+Network addresses used are 127.0.0.1 ports 5000 and 5001 for client1 and client 2 respectively.
 
 ### `gameHolder.py`
 Once the application starts, the `gameHolder` class is invoked. This component allows players to place their ships on the game field. It provides functionality to:
