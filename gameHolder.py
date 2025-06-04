@@ -41,6 +41,7 @@ class GameHolder:
 
         self.battleMg = None  # Initialized when all the ships are placed and battle starts
 
+        self.window.closeEvent = self.closeEvent
         # Layout scheme: Main window -> 2 tabs -> (1st tab):
         # Main layout   3 columns and 2 rows
         #               -> left side[ inside it boardLayout for keeping button grid] 2 columns in 1st row
@@ -85,6 +86,10 @@ class GameHolder:
 
         self.allShipsPlaced = False
 
+    def closeEvent(self, event):
+        if self.battleMg:
+            self.battleMg.cleanup_and_disconnect()
+        event.accept()
     def getWindow(self):
         return self.window
 

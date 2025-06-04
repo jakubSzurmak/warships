@@ -23,10 +23,10 @@ class ShipManager:
 
         self.shipAwaitingApproval = 0
 
-        self.remainingShipOneSelections = 1
-        self.remainingShipTwoSelections = 0
-        self.remainingShipThreeSelections = 0
-        self.remainingShipFourSelections = 0
+        self.remainingShipOneSelections = 4
+        self.remainingShipTwoSelections = 3
+        self.remainingShipThreeSelections = 2
+        self.remainingShipFourSelections = 1
 
         self.guiShipSelector = QtWidgets.QButtonGroup()
         self.shipFourOption = QtWidgets.QRadioButton(f'Four-masted ship, '

@@ -2,6 +2,7 @@ import gameHolder
 import sys
 
 
+
 # Application start point
 if __name__ == '__main__':
 
@@ -20,7 +21,3 @@ if __name__ == '__main__':
     # Pushing game initialization, from here action and checks start
     myGame.startState()
     sys.exit(myGame.getApp().exec())
-
-
-
-

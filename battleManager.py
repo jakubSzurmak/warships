@@ -26,7 +26,7 @@ class BattleManager(QObject):
         # Add exit button in battle screen
         self.exit_button = QtWidgets.QPushButton("Exit")
         self.exit_button.setFixedWidth(100)  # Make button smaller
-        self.exit_button.clicked.connect(quit)
+        self.exit_button.clicked.connect(self.safe_quit)
         self.exit_button.setStyleSheet("""
             QPushButton { 
                 background-color:lightgrey;
@@ -90,10 +90,7 @@ class BattleManager(QObject):
                     update_call(message)
 
                 except Exception as e:
-                    # If a client disconnects during the game it loses
-                    if self.battle_started:
-                        self.game_over(self.game_state.player_role)
-                        self.update_battle_ui()
+                    print(f"Network error: {e}")
 
 
         threading.Thread(target=listen, daemon=True).start()
@@ -118,6 +115,8 @@ class BattleManager(QObject):
             elif message == "START_BATTLE":
                 self.battle_started = True
                 self.ui_update_signal.emit("enable_battle_controls", None)
+            elif message == "DISCONNECT":
+                self.ui_update_signal.emit("opponent_disconnected", None)
 
 
     def handle_ui_update(self, action, data):
@@ -130,8 +129,24 @@ class BattleManager(QObject):
                 self.check_battle_start()
             elif action == "enable_battle_controls":
                 self.enable_battle_controls()
+            elif action == "opponent_disconnected":
+                self.handle_opponent_disconnect()
         except Exception as e:
             print(f"Error in UI update: {e}")
+
+    def handle_opponent_disconnect(self):
+        if self.battle_started:
+            self.game_over(self.game_state.player_role)
+            self.status_label.setText("Opponent disconnected. You win!")
+            self.shot_history.append("Opponent disconnected. You win by default!")
+
+    def cleanup_and_disconnect(self):
+        try:
+            if self.battle_started:
+                self.send_message_udp("DISCONNECT")
+            self.sock.close()
+        except Exception as e:
+            print(f"Error during cleanup: {e}")
 
     def send_message_udp(self, msg):
         if isinstance(msg, str):
@@ -571,3 +586,7 @@ class BattleManager(QObject):
         for i in range(1, 11):
             for j in range(1, 11):
                 self.enemy_board[i][j].setEnabled(False)
+
+    def safe_quit(self):
+        self.cleanup_and_disconnect()
+        quit()
