@@ -1,3 +1,4 @@
+import math
 import gameState
 import socket
 import threading
@@ -78,6 +79,8 @@ class BattleManager(QObject):
         self.ui_update_signal.connect(self.handle_ui_update)
 
         self._updating_ui = False
+
+        self.own_ships_sunk = 0
 
 
     def start_listener_udp(self, update_call):
@@ -447,12 +450,12 @@ class BattleManager(QObject):
             elif result == "SUNK":
                 self.set_hit_style(self.enemy_board[x][y])
                 self.shot_history.append(f"You fired at {letter}{number}: Ship sunk!")
-                self.game_state.update_enemy_ship_sunk(True)
+                self.game_state.update_enemy_ship_sunk()
 
             elif result.startswith("WIN"):
                 self.set_hit_style(self.enemy_board[x][y])
                 self.shot_history.append(f"You fired at {letter}{number}: Ship sunk!")
-                self.game_state.update_enemy_ship_sunk(True)
+                self.game_state.update_enemy_ship_sunk()
                 self.game_over(self.game_state.player_role)
                 return
 
@@ -515,8 +518,7 @@ class BattleManager(QObject):
                 elif result == self.game_state.SUNK:
                     self.set_hit_style(self.own_board_display[x][y])
                     self.shot_history.append(f"Enemy fired at {letter}{y}: Ship sunk!")
-                    self.game_state.update_enemy_ship_sunk(False)
-
+                    self.own_ships_sunk += 1
 
                     if self.game_state.is_game_over():
                         self.send_message_udp("RESULT:WIN")
@@ -560,10 +562,8 @@ class BattleManager(QObject):
         enemy_role = 2 if self.game_state.player_role == 1 else 1
         enemy_ships = self.game_state.get_remaining_ships(enemy_role)
 
-        own_intact = len(own_ships.values())
+        own_intact = len(own_ships.values()) - self.own_ships_sunk
         enemy_intact = len(enemy_ships.values())
-
-        print(own_ships, enemy_ships)
 
         self.own_ships_remaining.setText(f"Your ships: {own_intact}/10")
         self.enemy_ships_remaining.setText(f"Enemy ships: {enemy_intact}/10")

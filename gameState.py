@@ -184,14 +184,9 @@ class GameState:
     def set_player_role(self,role):
         self.player_role = role
 
-    def update_enemy_ship_sunk(self, enemy):
+    def update_enemy_ship_sunk(self):
+        enemy_role = 2 if self.player_role == 1 else 1
 
-        if enemy == True:
-            enemy_role = 2 if self.player_role == 1 else 1
-
-            #Inverse the roles to adjust enemy board status
-            enemy_ships = self.player1_ships if enemy_role == 1 else self.player2_ships
-            enemy_ships.popitem()
-        elif enemy == False:
-            ships = self.player1_ships if self.player_role == 1 else self.player2_ships
-            ships.popitem()
+        #Inverse the roles to adjust enemy board status
+        enemy_ships = self.player1_ships if enemy_role == 1 else self.player2_ships
+        enemy_ships.popitem()
