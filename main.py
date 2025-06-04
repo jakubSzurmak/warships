@@ -17,7 +17,7 @@ if __name__ == '__main__':
     # Setting starting size of GUI window and displaying it
     myGame.getWindow().show()
 
-    # Pushing game initialization from here action and checks start
+    # Pushing game initialization, from here action and checks start
     myGame.startState()
     sys.exit(myGame.getApp().exec())
 

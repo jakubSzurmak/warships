@@ -23,10 +23,10 @@ class ShipManager:
 
         self.shipAwaitingApproval = 0
 
-        self.remainingShipOneSelections = 0
+        self.remainingShipOneSelections = 1
         self.remainingShipTwoSelections = 0
-        self.remainingShipThreeSelections = 1
-        self.remainingShipFourSelections = 1
+        self.remainingShipThreeSelections = 0
+        self.remainingShipFourSelections = 0
 
         self.guiShipSelector = QtWidgets.QButtonGroup()
         self.shipFourOption = QtWidgets.QRadioButton(f'Four-masted ship, '
@@ -62,7 +62,6 @@ class ShipManager:
         return self.shipAwaitingApproval
 
     def updateShipOptionLabel(self, opt, i):
-        # print("mg.updateLabels")
         if opt == 1:
             self.remainingShipOneSelections += i
             self.shipOneOption.setText(f'Single-masted ship, {self.remainingShipOneSelections} remaining')
@@ -89,7 +88,6 @@ class ShipManager:
 
     # Lekko na odwrót do możliwej poprawki tak jak litery i cyfry w gameholder, teraz switchShipOptions(True) wyłącza XD
     def switchShipOptions(self, bit):
-        # print("mg.switchOptions")
         if self.remainingShipOneSelections > 0:
             self.shipOneOption.setDisabled(bit)
         if self.remainingShipTwoSelections > 0:
@@ -101,7 +99,6 @@ class ShipManager:
 
     # Removing ship option selection from radio buttons
     def uncheckShipOptions(self):
-        # print("mg.uncheckShipOptions")
         self.guiShipSelector.setExclusive(False)
         for button in self.guiShipSelector.buttons():
             button.setChecked(False)
@@ -109,7 +106,6 @@ class ShipManager:
 
     # Preparing structures for next ship
     def shipSelectionConfirmed(self):
-        # print("mg.selectionConfirmed")
         if self.shipAwaitingApproval != 0:
             self.shipAwaitingApproval = 0
 
@@ -152,7 +148,6 @@ class ShipManager:
     # x == a,b,c,...,j
     # y == 1..10
     def shipFieldSelected(self, x, y):
-        # print("mg.shipFieldSelected")
         self.switchShipOptions(True)
         self.remainingShipSelections -= 1
         self.appendShipField(x, y)
@@ -160,10 +155,8 @@ class ShipManager:
             self.setShipAwaitingApproval(self.currentShipOption)
 
     def getShipOptionButtons(self):
-        # print("mg.getShipOptionButtons")
         return [self.shipFourOption, self.shipThreeOption, self.shipTwoOption, self.shipOneOption]
 
     def shipOptionSelected(self, uuid):
-        # print("mg.shipOptionSelected")
         self.currentShipOption = uuid
         self.remainingShipSelections = uuid

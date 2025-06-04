@@ -1,4 +1,6 @@
 import math
+import time
+
 import gameState
 import socket
 import threading
@@ -78,18 +80,24 @@ class BattleManager(QObject):
 
         self.own_ships_sunk = 0
 
-
     def start_listener_udp(self, update_call):
+
         def listen():
             while True:
                 try:
                     data, addr = self.sock.recvfrom(1024)
                     message = data.decode()
                     update_call(message)
+
                 except Exception as e:
-                    print(f"Network error: {e}")
+                    # If a client disconnects during the game it loses
+                    if self.battle_started:
+                        self.game_over(self.game_state.player_role)
+                        self.update_battle_ui()
+
 
         threading.Thread(target=listen, daemon=True).start()
+
 
     def handle_message(self, message):
         with self.state_lock:
@@ -394,7 +402,6 @@ class BattleManager(QObject):
             # Convert the coordinates
             x = self.game_state.letter_to_index(letter)
             y = number
-            print("Firing shot at", x, y)
             msg = f"SHOT:{x},{y}"
             self.send_message_udp(msg)
 
