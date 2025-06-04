@@ -13,7 +13,6 @@ class BattleManager(QObject):
         super().__init__()
         self.game_holder = game_holder
         self.game_state = gameState.GameState(game_holder.getClientId())
-        self.localNetworkMsgCounter = 0
 
         # Initialize UI components first
         self.status_label = QtWidgets.QLabel("Waiting for battle to begin...")
@@ -59,7 +58,6 @@ class BattleManager(QObject):
 
         self.enemyShotX = None
         self.enemyShotY = None
-        self.flag = 0
 
         self.opponent_ready = False
         self.battle_started = False
@@ -222,7 +220,6 @@ class BattleManager(QObject):
                         self.set_own_board_field_style(self.own_board_display[i][j])
 
                 self.own_board_display[i][j].setFixedSize(60, 55)
-                # FIXED: Set content margins to zero on the widget
                 self.own_board_layout.addWidget(self.own_board_display[i][j], i, j, 1,
                                                 1)  # Add row, column span parameters
 
@@ -478,7 +475,6 @@ class BattleManager(QObject):
     def receive_shot(self):
         with self.state_lock:
             try:
-            # Replace by receiving a move from the server when it is implemented
 
                 x, y = self.enemyShotX, self.enemyShotY
 
