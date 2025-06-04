@@ -46,3 +46,9 @@ The `GameState` class works closely with `BattleManager`. It:
 - **PySide6**: For GUI creation.
 - **socket** (built-in): For UDP-based network communication.
 - **threading** (built-in): For managing concurrency during multiplayer sessions.
+
+
+## Members Contributions
+
+- **Jakub Szurmak**: Ships setup stage and all of the functionalities there, styling of the buttons and theme, network communication between the clients, collaborating on the implementation of battling logic and edge cases (gameHolder.py, shipManager.py, main.py)
+- **Kacper Sochacki**: Implementation of the battle phase and most of the functionalities in the BattleManager.py, thread locking, safe quit and detecting enemy disconnect, shooting and receiving shots logic (battleManager.py, gameState.py)
